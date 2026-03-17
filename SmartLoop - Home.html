@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SmartLoop – Home</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F0F2F5;display:flex;justify-content:center}
+#root{width:100%;max-width:430px;min-height:100vh}
+button{font-family:inherit}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#B0B8C9;border-radius:4px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+
+/* ═══ SMARTLOOP PALETTE ═══ */
+const SL={
+  green:{900:"#0A3D2A",700:"#0D6B3F",500:"#10B068",400:"#2ED47A",300:"#7AE4A8",100:"#D6F5E3",50:"#EDFBF3"},
+  teal:{700:"#00796B",500:"#00A896",300:"#64D8CB",100:"#D0F4F0"},
+  orange:{700:"#E65100",500:"#FF6D00",400:"#FF9100",300:"#FFB74D",100:"#FFF3E0"},
+  grey:{900:"#1A1F2B",800:"#2D3345",700:"#3E4560",500:"#6B7280",300:"#B0B8C9",200:"#D1D5DC",100:"#F0F2F5",50:"#F8F9FB"},
+  red:{500:"#EF4444",100:"#FEE2E2"},
+  yellow:{500:"#F59E0B",100:"#FEF3C7"},
+  white:"#FFFFFF",
+};
+
+/* ═══ INLINE SVG ICONS ═══ */
+const iconPaths={
+  home:"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
+  trash2:"M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M10 11v6 M14 11v6",
+  gift:"M20 12v10H4V12 M2 7h20v5H2z M12 22V7 M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z",
+  "bar-chart-3":"M12 20V10 M18 20V4 M6 20v-4",
+  bell:"M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0",
+  leaf:"M11 20A7 7 0 0 0 9.8 6.9C15.5 4.9 20 2 20 2s-3 5.5-5 11.2A7 7 0 0 0 11 20z M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12",
+  "dollar-sign":"M12 1v22 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",
+  zap:"M13 2L3 14h9l-1 8 10-12h-9l1-8",
+  "trending-down":"M23 18l-9.5-9.5-5 5L1 6",
+  users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75 M9 7a4 4 0 1 0 0 .001",
+  wind:"M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2",
+  "alert-triangle":"M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z M12 9v4 M12 17h.01",
+  "check-circle":"M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3",
+  x:"M18 6L6 18 M6 6l12 12",
+  "arrow-down":"M12 5v14 M19 12l-7 7-7-7",
+  "arrow-up":"M12 19V5 M5 12l7-7 7 7",
+  minus:"M5 12h14",
+};
+
+function Icon({name,size=20,color="#6B7280",strokeWidth=1.5,style={}}){
+  const d=iconPaths[name]||"";
+  return(
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{display:"inline-block",verticalAlign:"middle",...style}}>
+      {d.split(" M").map((seg,i)=><path key={i} d={(i>0?"M":"")+seg}/>)}
+    </svg>
+  );
+}
+
+/* ═══ DATA ═══ */
+const weeklyData=[
+  {week:"W1",fill:85,target:85},{week:"W2",fill:82,target:85},
+  {week:"W3",fill:88,target:85},{week:"W4",fill:80,target:85},
+  {week:"W5",fill:74,target:76.5},{week:"W6",fill:71,target:76.5},
+  {week:"W7",fill:68,target:76.5},{week:"W8",fill:70,target:76.5},
+  {week:"W9",fill:65,target:72.25},{week:"W10",fill:62,target:72.25},
+  {week:"W11",fill:60,target:72.25},{week:"W12",fill:58,target:72.25},
+];
+const binTypes=[
+  {id:"general",name:"General Waste",color:SL.grey[700],fillPct:62,icon:"\uD83D\uDDD1",nextCollection:"Tue"},
+  {id:"recycling",name:"Recycling",color:SL.teal[500],fillPct:45,icon:"\u267B\uFE0F",nextCollection:"Tue"},
+  {id:"fogo",name:"FOGO",color:SL.green[500],fillPct:78,icon:"\uD83C\uDF3F",nextCollection:"Fri"},
+];
+const badges=[
+  {name:"First Week",icon:"\uD83C\uDF31",earned:true,desc:"Completed baseline week"},
+  {name:"10% Reducer",icon:"\uD83D\uDCC9",earned:true,desc:"Hit 10% reduction target"},
+  {name:"Streak Master",icon:"\uD83D\uDD25",earned:true,desc:"3 weeks on target"},
+  {name:"FOGO Friend",icon:"\uD83E\uDD6C",earned:true,desc:"Used FOGO bin consistently"},
+  {name:"Neighbourhood Star",icon:"\u2B50",earned:false,desc:"Top 20% in your area"},
+  {name:"15% Champion",icon:"\uD83C\uDFC6",earned:false,desc:"Hit 15% reduction"},
+];
+const vouchers=[
+  {merchant:"Green Beans Caf\u00E9",offer:"Free coffee with any purchase",value:"$5",expiry:"60 days",redeemed:false},
+  {merchant:"EcoSprout Nursery",offer:"Free seedling with any purchase",value:"$12",expiry:"60 days",redeemed:false},
+  {merchant:"Sunday Farmers Market",offer:"2-for-1 on any stall",value:"$15",expiry:"60 days",redeemed:false},
+  {merchant:"CompostKing",offer:"20% off compost bin kit",value:"$18",expiry:"60 days",redeemed:true},
+  {merchant:"Local Harvest Co-op",offer:"$10 off first box",value:"$10",expiry:"60 days",redeemed:false},
+];
+const tips=[
+  {text:"Your bin reaches 75% full by Tuesday \u2014 consider splitting food scraps into FOGO earlier in the week.",priority:"high"},
+  {text:"You added 3 soft plastic items this week. Drop them in the soft plastics collection bin at your local Coles or Woolworths store.",priority:"medium"},
+  {text:"Great week! Your general waste was 18% below baseline. Keep it up to protect your cash balance.",priority:"positive"},
+];
+
+/* ═══ SHARED COMPONENTS ═══ */
+
+function SmartLoopLogo({size=28}){
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:8}}>
+      <svg viewBox="0 0 40 40" width={size} height={size}>
+        <defs><linearGradient id="slg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor={SL.green[500]}/><stop offset="100%" stopColor={SL.teal[500]}/></linearGradient></defs>
+        <circle cx="20" cy="20" r="18" fill="none" stroke="url(#slg)" strokeWidth="3.5" strokeDasharray="85 28" strokeLinecap="round"/>
+        <circle cx="20" cy="20" r="10" fill="none" stroke={SL.green[400]} strokeWidth="2.5" strokeDasharray="48 16" strokeDashoffset="12" strokeLinecap="round"/>
+        <circle cx="20" cy="20" r="3.5" fill={SL.green[500]}/>
+      </svg>
+      <span style={{fontWeight:800,fontSize:size*0.6,letterSpacing:"-0.02em",background:`linear-gradient(135deg,${SL.green[700]},${SL.teal[700]})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>SmartLoop</span>
+    </div>
+  );
+}
+
+function Card({children,style,onClick,hover}){
+  const[h,setH]=useState(false);
+  return(
+    <div onClick={onClick} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
+      style={{background:SL.white,borderRadius:16,padding:20,boxShadow:h&&hover?"0 8px 32px rgba(10,61,42,0.12)":"0 2px 12px rgba(10,61,42,0.06)",transition:"all 0.3s",cursor:onClick?"pointer":"default",transform:h&&hover?"translateY(-2px)":"none",...style}}>
+      {children}
+    </div>
+  );
+}
+
+function BinGauge({bin,size="normal"}){
+  const ht=size==="small"?100:160,w=size==="small"?50:70;
+  const fillH=(bin.fillPct/100)*(ht-20);
+  const fc=bin.fillPct>80?SL.red[500]:bin.fillPct>50?SL.yellow[500]:SL.green[500];
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+      <div style={{position:"relative",width:w,height:ht}}>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:ht-10,borderRadius:"4px 4px 10px 10px",background:SL.grey[100],border:`2px solid ${SL.grey[200]}`,overflow:"hidden"}}>
+          <div style={{position:"absolute",bottom:0,left:0,right:0,height:fillH,background:`linear-gradient(to top,${fc},${fc}88)`,transition:"height 1s",borderRadius:"0 0 8px 8px"}}/>
+          {["Full","Med","Low"].map((l,i)=>(
+            <div key={l} style={{position:"absolute",top:`${15+i*30}%`,left:6,right:6,display:"flex",alignItems:"center",gap:4}}>
+              <div style={{width:6,height:6,borderRadius:"50%",background:SL.white,border:`1.5px solid ${SL.grey[300]}`,flexShrink:0}}/>
+              {size!=="small"&&<span style={{fontSize:9,color:SL.grey[500],fontWeight:600}}>{l}</span>}
+            </div>
+          ))}
+        </div>
+        <div style={{position:"absolute",top:0,left:-4,right:-4,height:14,borderRadius:"6px 6px 2px 2px",background:bin.color,boxShadow:"0 2px 6px rgba(0,0,0,0.15)"}}/>
+      </div>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontSize:size==="small"?18:22}}>{bin.icon}</div>
+        <div style={{fontSize:size==="small"?10:12,fontWeight:700,color:SL.grey[700],marginTop:2}}>{bin.fillPct}%</div>
+        {size!=="small"&&<div style={{fontSize:10,color:SL.grey[500],marginTop:1}}>{bin.name}</div>}
+      </div>
+    </div>
+  );
+}
+
+function CircularProgress({value,max,size=120,strokeWidth=10,color=SL.green[500],children}){
+  const r=(size-strokeWidth)/2,c=2*Math.PI*r,p=Math.min(value/max,1)*c;
+  return(
+    <div style={{position:"relative",width:size,height:size}}>
+      <svg width={size} height={size} style={{transform:"rotate(-90deg)"}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={SL.grey[100]} strokeWidth={strokeWidth}/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={strokeWidth} strokeDasharray={c} strokeDashoffset={c-p} strokeLinecap="round" style={{transition:"stroke-dashoffset 1.5s"}}/>
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>{children}</div>
+    </div>
+  );
+}
+
+function StatusPill({label,color,bg}){
+  return(<span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:700,color,background:bg}}><span style={{width:6,height:6,borderRadius:"50%",background:color}}/>{label}</span>);
+}
+
+/* ═══ PURE SVG CHART ═══ */
+function MiniChart({data,width=340,height=180}){
+  const pad={t:10,r:10,b:30,l:35};
+  const cw=width-pad.l-pad.r,ch=height-pad.t-pad.b;
+  const minY=40,maxY=100;
+  const x=i=>(i/(data.length-1))*cw+pad.l;
+  const y=v=>pad.t+ch*(1-(v-minY)/(maxY-minY));
+  const fillPath=data.map((d,i)=>`${i===0?"M":"L"}${x(i).toFixed(1)},${y(d.fill).toFixed(1)}`).join(" ");
+  const targetPath=data.map((d,i)=>`${i===0?"M":"L"}${x(i).toFixed(1)},${y(d.target).toFixed(1)}`).join(" ");
+  const areaPath=fillPath+` L${x(data.length-1).toFixed(1)},${y(minY).toFixed(1)} L${x(0).toFixed(1)},${y(minY).toFixed(1)} Z`;
+
+  return(
+    <svg viewBox={`0 0 ${width} ${height}`} width="100%" style={{display:"block"}}>
+      <defs>
+        <linearGradient id="areaG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={SL.green[500]} stopOpacity="0.25"/>
+          <stop offset="100%" stopColor={SL.green[500]} stopOpacity="0.02"/>
+        </linearGradient>
+      </defs>
+      {/* Grid lines */}
+      {[40,60,80,100].map(v=>(
+        <g key={v}>
+          <line x1={pad.l} y1={y(v)} x2={width-pad.r} y2={y(v)} stroke={SL.grey[200]} strokeWidth="0.5"/>
+          <text x={pad.l-6} y={y(v)+4} textAnchor="end" fontSize="9" fill={SL.grey[500]}>{v}%</text>
+        </g>
+      ))}
+      {/* X labels */}
+      {data.map((d,i)=>(i%2===0||i===data.length-1)&&(
+        <text key={i} x={x(i)} y={height-8} textAnchor="middle" fontSize="9" fill={SL.grey[500]}>{d.week}</text>
+      ))}
+      {/* Area fill */}
+      <path d={areaPath} fill="url(#areaG)"/>
+      {/* Target line (dashed) */}
+      <path d={targetPath} fill="none" stroke={SL.orange[400]} strokeWidth="2" strokeDasharray="6 4"/>
+      {/* Fill line */}
+      <path d={fillPath} fill="none" stroke={SL.green[500]} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Data points */}
+      {data.map((d,i)=>(
+        <circle key={i} cx={x(i)} cy={y(d.fill)} r="3" fill={SL.white} stroke={SL.green[500]} strokeWidth="2"/>
+      ))}
+    </svg>
+  );
+}
+
+/* ═══ BINNY THE BIN CHOOK ═══ */
+
+function BinnyIcon({eyeColor=SL.green[500],size=130,isDead=false}){
+  return(
+    <svg viewBox="0 0 200 240" width={size} height={size*1.2} xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bBd" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0%" stopColor="#F5F0EB"/><stop offset="60%" stopColor="#E8E0D6"/><stop offset="100%" stopColor="#D4C9BC"/></linearGradient>
+        <linearGradient id="bWg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#2A2A2A"/><stop offset="100%" stopColor="#1A1A1A"/></linearGradient>
+        <radialGradient id="eGL" cx="50%" cy="50%" r="70%"><stop offset="0%" stopColor={eyeColor} stopOpacity="0.9"/><stop offset="100%" stopColor={eyeColor} stopOpacity="0"/></radialGradient>
+      </defs>
+      {/* Legs */}
+      <g stroke={SL.grey[700]} strokeWidth="3" strokeLinecap="round" fill="none">
+        <line x1="88" y1="185" x2="80" y2="220"/><line x1="112" y1="185" x2="120" y2="220"/>
+        <path d="M72 220 L80 220 L84 226 M80 220 L80 227 M80 220 L76 226" strokeWidth="2"/>
+        <path d="M112 220 L120 220 L124 226 M120 220 L120 227 M120 220 L116 226" strokeWidth="2"/>
+      </g>
+      {/* Body group — flips when dead */}
+      <g style={{transformOrigin:"100px 130px",transform:isDead?"rotate(180deg) translateY(30px)":"rotate(0deg)",transition:"transform 0.8s cubic-bezier(0.4,0,0.2,1)"}}>
+        {/* Tail */}
+        <ellipse cx="52" cy="152" rx="20" ry="9" fill="url(#bWg)" transform="rotate(-20,52,152)"/>
+        <ellipse cx="47" cy="147" rx="16" ry="7" fill="#222" transform="rotate(-30,47,147)"/>
+        <ellipse cx="45" cy="155" rx="15" ry="6" fill="#333" transform="rotate(-12,45,155)"/>
+        {/* Body */}
+        <ellipse cx="100" cy="148" rx="48" ry="42" fill="url(#bBd)"/>
+        {/* Wing */}
+        <ellipse cx="72" cy="142" rx="30" ry="20" fill="url(#bWg)" transform="rotate(-8,72,142)"/>
+        <path d="M50 134 Q62 138 54 148" stroke="#444" strokeWidth="1" fill="none"/>
+        <path d="M56 131 Q68 135 61 145" stroke="#444" strokeWidth="1" fill="none"/>
+        <path d="M62 129 Q74 133 67 143" stroke="#444" strokeWidth="1" fill="none"/>
+        {/* Neck */}
+        <path d="M108 120 Q114 90 112 65 Q111 48 114 38 Q120 36 125 40 Q130 55 128 78 Q126 100 122 125" fill="url(#bBd)"/>
+        {/* Head */}
+        <ellipse cx="118" cy="36" rx="18" ry="15" fill="url(#bBd)"/>
+        <ellipse cx="121" cy="32" rx="11" ry="9" fill="#1A1A1A" opacity="0.12"/>
+        {/* Eyes */}
+        {isDead?(
+          <g stroke={SL.red[500]} strokeWidth="2.5" strokeLinecap="round">
+            <line x1="108" y1="30" x2="115" y2="37"/><line x1="115" y1="30" x2="108" y2="37"/>
+            <line x1="122" y1="30" x2="129" y2="37"/><line x1="129" y1="30" x2="122" y2="37"/>
+          </g>
+        ):(
+          <g>
+            <circle cx="112" cy="34" r="9" fill="url(#eGL)"/><circle cx="125" cy="34" r="9" fill="url(#eGL)"/>
+            <circle cx="112" cy="34" r="5.5" fill={eyeColor} style={{transition:"fill 0.4s"}}/>
+            <circle cx="112" cy="34" r="2.8" fill="#111"/><circle cx="110.5" cy="32.5" r="1.2" fill="white" opacity="0.85"/>
+            <circle cx="125" cy="34" r="5.5" fill={eyeColor} style={{transition:"fill 0.4s"}}/>
+            <circle cx="125" cy="34" r="2.8" fill="#111"/><circle cx="123.5" cy="32.5" r="1.2" fill="white" opacity="0.85"/>
+          </g>
+        )}
+        {/* Beak */}
+        <path d="M132 37 Q152 42 168 58 Q172 63 170 65 Q164 62 148 53 Q136 47 130 42 Z" fill="#1A1A1A"/>
+        <path d="M137 41 Q152 47 164 58" stroke="#333" strokeWidth="0.6" fill="none"/>
+        {/* Feather texture */}
+        <g stroke="#C8BDB0" strokeWidth="0.8" fill="none">
+          <path d="M82 136 Q92 134 97 138"/><path d="M87 144 Q97 142 102 146"/>
+          <path d="M92 152 Q102 150 107 154"/><path d="M112 130 Q120 128 124 132"/>
+          <path d="M114 138 Q122 136 126 140"/>
+        </g>
+      </g>
+    </svg>
+  );
+}
+
+function BinnyMini({color=SL.green[500]}){
+  return(
+    <svg viewBox="85 22 60 38" width="22" height="16">
+      <ellipse cx="113" cy="44" rx="14" ry="11" fill="#E8E0D6"/>
+      <ellipse cx="104" cy="42" rx="9" ry="6" fill="#222" transform="rotate(-8,104,42)"/>
+      <circle cx="110" cy="34" r="3.5" fill={color}/><circle cx="118" cy="34" r="3.5" fill={color}/>
+      <circle cx="110" cy="34" r="1.8" fill="#111"/><circle cx="118" cy="34" r="1.8" fill="#111"/>
+      <circle cx="109" cy="33" r="0.8" fill="white" opacity="0.8"/><circle cx="117" cy="33" r="0.8" fill="white" opacity="0.8"/>
+      <path d="M123 36 Q135 40 143 50" stroke="#1A1A1A" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+/* ═══ FRIDGE MAGNET ═══ */
+
+function FridgeMagnet({bins,onClose}){
+  const[truckOn,setTruckOn]=useState(false);
+  const[binDown,setBinDown]=useState(false);
+  const[ci,setCi]=useState(0);
+  const cc=[SL.green[500],SL.teal[500],SL.orange[500],SL.green[400],SL.teal[300]];
+  useEffect(()=>{if(!truckOn)return;const id=setInterval(()=>setCi(c=>(c+1)%cc.length),500);return()=>clearInterval(id);},[truckOn]);
+  const gen=bins.find(b=>b.id==="general")||bins[0];
+  const isY=new Date().getDate()%2===0;
+  const eyeC=binDown?SL.red[500]:truckOn?cc[ci]:isY?SL.yellow[500]:SL.green[500];
+  const bc=truckOn?cc[ci]:"transparent";
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)"}}>
+      <div style={{position:"relative",maxWidth:420,width:"90%"}}>
+        <button onClick={onClose} style={{position:"absolute",top:-16,right:-16,zIndex:10,width:36,height:36,borderRadius:"50%",background:SL.white,border:"none",cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Icon name="x" size={18} color={SL.grey[700]}/>
+        </button>
+        <div style={{background:"linear-gradient(180deg,#E8EBF0,#D4D8E0)",borderRadius:20,padding:28,boxShadow:"inset 0 2px 4px rgba(255,255,255,0.5),0 20px 60px rgba(0,0,0,0.3)"}}>
+          <div style={{textAlign:"center",marginBottom:14}}><span style={{fontSize:11,fontWeight:700,color:SL.grey[500],textTransform:"uppercase",letterSpacing:2}}>Ripple Fridge Magnet</span></div>
+          <div style={{background:`linear-gradient(180deg,${SL.grey[700]},${SL.grey[800]})`,borderRadius:16,padding:"20px 20px 24px",position:"relative",overflow:"hidden",boxShadow:"0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.1)",border:`3px solid ${bc}`,transition:"border-color 0.3s"}}>
+            <div style={{textAlign:"center",marginBottom:6}}><span style={{fontSize:10,fontWeight:700,color:SL.grey[300],letterSpacing:1.5,textTransform:"uppercase"}}>{isY?"Yellow Bin Week":"Green Bin Week"}</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{display:"flex",flexDirection:"column",gap:16,paddingLeft:4}}>
+                {["Full","Med","Low"].map((lv,i)=>{
+                  const th=[80,50,20],act=gen.fillPct>=th[i],co=[SL.red[500],SL.yellow[500],SL.green[500]];
+                  return(<div key={lv} style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:16,height:16,borderRadius:"50%",background:act?co[i]:SL.grey[700],boxShadow:act?`0 0 14px ${co[i]}`:"none",border:`2px solid ${act?co[i]:SL.grey[500]}`,transition:"all 0.5s"}}/>
+                    <span style={{fontSize:14,fontWeight:700,color:act?SL.white:SL.grey[500]}}>{lv}</span>
+                  </div>);
+                })}
+              </div>
+              <div style={{flex:1,display:"flex",justifyContent:"center",marginTop:-10,marginBottom:-10}}>
+                <BinnyIcon eyeColor={eyeC} size={140} isDead={binDown}/>
+              </div>
+            </div>
+            {binDown&&(<div style={{background:`${SL.red[500]}22`,border:`1px solid ${SL.red[500]}`,borderRadius:10,padding:"8px 14px",marginTop:10,marginBottom:4,display:"flex",alignItems:"center",gap:8}}>
+              <Icon name="alert-triangle" size={16} color={SL.red[500]}/>
+              <span style={{fontSize:12,color:SL.red[500],fontWeight:700}}>BIN DOWN \u2014 DEAD CHOOK!</span>
+            </div>)}
+            <div style={{background:"rgba(255,255,255,0.06)",borderRadius:10,padding:14,marginTop:12}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:12,color:SL.grey[300]}}>General Waste</span>
+                <span style={{fontSize:20,fontWeight:800,color:SL.white}}>{gen.fillPct}%</span>
+              </div>
+              <div style={{height:6,background:SL.grey[700],borderRadius:3,marginTop:8,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${gen.fillPct}%`,background:gen.fillPct>80?SL.red[500]:gen.fillPct>50?SL.yellow[500]:SL.green[500],borderRadius:3,transition:"width 1s"}}/>
+              </div>
+            </div>
+            <div style={{textAlign:"center",padding:"12px 0 4px",marginTop:10,borderTop:`1px solid ${SL.grey[700]}`}}>
+              <span style={{fontSize:11,color:SL.grey[500]}}>Next collection</span>
+              <div style={{fontSize:16,fontWeight:800,color:SL.green[400],marginTop:2}}>TUESDAY</div>
+            </div>
+            <div style={{textAlign:"center",marginTop:10}}><span style={{fontSize:16,fontWeight:900,color:SL.white,letterSpacing:"-0.02em"}}>SmartLoop</span></div>
+          </div>
+          <div style={{display:"flex",gap:10,marginTop:16}}>
+            <button onClick={()=>setTruckOn(!truckOn)} style={{flex:1,padding:"10px 12px",borderRadius:10,border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:truckOn?SL.orange[500]:SL.grey[100],color:truckOn?SL.white:SL.grey[700],transition:"all 0.3s"}}>{truckOn?"Truck Nearby!":"Simulate Truck"}</button>
+            <button onClick={()=>setBinDown(!binDown)} style={{flex:1,padding:"10px 12px",borderRadius:10,border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:binDown?SL.red[500]:SL.grey[100],color:binDown?SL.white:SL.grey[700],transition:"all 0.3s"}}>{binDown?"Dead Chook!":"Simulate Bin Down"}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══ NAV BAR ═══ */
+
+function NavBar({active,setActive,onMagnet}){
+  const items=[{id:"home",icon:"home",label:"Home"},{id:"bins",icon:"trash2",label:"Bins"},{id:"rewards",icon:"gift",label:"Rewards"},{id:"insights",icon:"bar-chart-3",label:"Insights"}];
+  return(
+    <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",padding:"8px 0 12px",background:SL.white,borderTop:`1px solid ${SL.grey[100]}`,position:"sticky",bottom:0}}>
+      {items.map(it=>(
+        <button key={it.id} onClick={()=>setActive(it.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"4px 12px",borderRadius:12}}>
+          <Icon name={it.icon} size={20} color={active===it.id?SL.green[500]:SL.grey[300]} strokeWidth={active===it.id?2.5:1.5}/>
+          <span style={{fontSize:10,fontWeight:active===it.id?700:500,color:active===it.id?SL.green[700]:SL.grey[500]}}>{it.label}</span>
+          {active===it.id&&<div style={{width:4,height:4,borderRadius:"50%",background:SL.green[500],marginTop:1}}/>}
+        </button>
+      ))}
+      <button onClick={onMagnet} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,background:"none",border:"none",cursor:"pointer",padding:"4px 12px"}}>
+        <div style={{width:28,height:28,borderRadius:8,background:SL.grey[800],display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.15)"}}><BinnyMini/></div>
+        <span style={{fontSize:10,fontWeight:500,color:SL.grey[500]}}>Binny</span>
+      </button>
+    </div>
+  );
+}
+
+/* ═══ PAGES ═══ */
+
+function HomePage({cashBalance,weekNumber,phase}){
+  const last=weeklyData[weeklyData.length-1].fill,prev=weeklyData[weeklyData.length-2].fill;
+  const trend=last<prev?"improving":last===prev?"stable":"attention";
+  const tc={improving:{l:"Improving",icon:"arrow-down"},stable:{l:"Stable",icon:"minus"},attention:{l:"Needs Attention",icon:"arrow-up"}}[trend];
+  const reductionPct=Math.round(((85-last)/85)*100);
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{background:`linear-gradient(135deg,${SL.green[700]},${SL.teal[700]})`,borderRadius:20,padding:24,color:SL.white}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div>
+            <div style={{fontSize:14,opacity:0.8,marginBottom:4}}>Good morning, Len</div>
+            <div style={{fontSize:22,fontWeight:800,lineHeight:1.2}}>Great Job!</div>
+            <div style={{fontSize:13,opacity:0.85,marginTop:6,lineHeight:1.4}}>Track and manage your waste<br/>to help create a cleaner world.</div>
+          </div>
+          <CircularProgress value={reductionPct} max={25} size={90} strokeWidth={8} color={SL.green[300]}>
+            <span style={{fontSize:22,fontWeight:800,color:SL.white}}>{reductionPct}%</span>
+            <span style={{fontSize:9,color:"rgba(255,255,255,0.8)"}}>reduced</span>
+          </CircularProgress>
+        </div>
+        <div style={{display:"flex",gap:8,marginTop:16,flexWrap:"wrap"}}>
+          <StatusPill label={"Week "+weekNumber} color={SL.white} bg="rgba(255,255,255,0.2)"/>
+          <StatusPill label={phase} color={SL.green[300]} bg="rgba(255,255,255,0.15)"/>
+          <div style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:20,background:"rgba(255,255,255,0.15)"}}>
+            <Icon name={tc.icon} size={12} color={SL.white} strokeWidth={2.5}/>
+            <span style={{fontSize:11,fontWeight:700,color:SL.white}}>{tc.l}</span>
+          </div>
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        {[
+          {icon:"dollar-sign",iconBg:SL.green[100],iconC:SL.green[500],label:"Cash Balance",val:"$"+cashBalance,sub:"of $120.00",valC:SL.green[700]},
+          {icon:"zap",iconBg:SL.orange[100],iconC:SL.orange[500],label:"At Risk",val:"$3.20",sub:"this week",valC:SL.orange[500]},
+          {icon:"trending-down",iconBg:SL.teal[100],iconC:SL.teal[500],label:"Fill Rate",val:"58%",sub:"Target: 72%",valC:SL.teal[700],subC:SL.green[500]},
+          {icon:"users",iconBg:SL.green[100],iconC:SL.green[500],label:"Neighbourhood",val:"Top 20%",sub:"vs your area",valC:SL.green[700]},
+        ].map((s,i)=>(
+          <Card key={i} style={{padding:16}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <div style={{width:32,height:32,borderRadius:8,background:s.iconBg,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={s.icon} size={16} color={s.iconC}/></div>
+              <span style={{fontSize:11,color:SL.grey[500],fontWeight:600}}>{s.label}</span>
+            </div>
+            <div style={{fontSize:26,fontWeight:800,color:s.valC}}>{s.val}</div>
+            <div style={{fontSize:10,color:s.subC||SL.grey[500],marginTop:2}}>{s.sub}</div>
+          </Card>
+        ))}
+      </div>
+      <Card style={{background:`linear-gradient(135deg,${SL.green[50]},${SL.teal[100]})`,border:`1px solid ${SL.green[300]}`}}>
+        <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+          <div style={{width:36,height:36,borderRadius:10,background:SL.green[500],display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="leaf" size={18} color={SL.white}/></div>
+          <div>
+            <div style={{fontSize:12,fontWeight:700,color:SL.green[700],marginBottom:4}}>This Week's AI Tip</div>
+            <div style={{fontSize:13,color:SL.grey[700],lineHeight:1.5}}>{tips[0].text}</div>
+          </div>
+        </div>
+      </Card>
+      <Card>
+        <div style={{fontSize:14,fontWeight:700,color:SL.grey[900],marginBottom:16}}>Your Bins</div>
+        <div style={{display:"flex",justifyContent:"space-around"}}>{binTypes.map(b=><BinGauge key={b.id} bin={b}/>)}</div>
+        <div style={{display:"flex",justifyContent:"center",gap:20,marginTop:16,paddingTop:12,borderTop:`1px solid ${SL.grey[100]}`}}>
+          {binTypes.map(b=>(<div key={b.id} style={{textAlign:"center"}}><div style={{fontSize:10,color:SL.grey[500]}}>Next pickup</div><div style={{fontSize:12,fontWeight:700,color:SL.grey[700]}}>{b.nextCollection}</div></div>))}
+        </div>
+      </Card>
+      <Card style={{background:SL.yellow[100],border:`1px solid ${SL.yellow[500]}40`}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <Icon name="wind" size={18} color={SL.yellow[500]}/>
+          <div><div style={{fontSize:12,fontWeight:700,color:SL.grey[800]}}>Wind Warning \u2014 Tuesday</div><div style={{fontSize:11,color:SL.grey[600]}}>Gusts up to 45km/h. Secure your bins before collection.</div></div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function BinsPage(){
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{fontSize:20,fontWeight:800,color:SL.grey[900]}}>Bin Monitor</div>
+      {binTypes.map(bin=>(
+        <Card key={bin.id} hover>
+          <div style={{display:"flex",alignItems:"center",gap:16}}>
+            <BinGauge bin={bin} size="small"/>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:700,color:SL.grey[900]}}>{bin.name}</div>
+              <div style={{fontSize:12,color:SL.grey[500],marginTop:4}}>Fill level: {bin.fillPct}%</div>
+              <div style={{height:6,background:SL.grey[100],borderRadius:3,marginTop:8,overflow:"hidden"}}><div style={{height:"100%",width:bin.fillPct+"%",background:bin.fillPct>80?SL.red[500]:bin.fillPct>50?SL.yellow[500]:SL.green[500],borderRadius:3,transition:"width 1s"}}/></div>
+              <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
+                <span style={{fontSize:11,color:SL.grey[500]}}>Next: <strong>{bin.nextCollection}</strong></span>
+                <StatusPill label={bin.fillPct>80?"Near Full":bin.fillPct>50?"Moderate":"Good"} color={bin.fillPct>80?SL.red[500]:bin.fillPct>50?SL.yellow[500]:SL.green[500]} bg={bin.fillPct>80?SL.red[100]:bin.fillPct>50?SL.yellow[100]:SL.green[100]}/>
+              </div>
+            </div>
+          </div>
+        </Card>
+      ))}
+      <Card style={{background:SL.grey[50]}}>
+        <div style={{fontSize:13,fontWeight:700,color:SL.grey[700],marginBottom:8}}>ThinkLid Sensor</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          {[{l:"Battery",v:"98%",s:"~13 years"},{l:"Signal",v:"Strong",s:"NB-IoT"},{l:"Last reading",v:"2 min ago",s:"Real-time"},{l:"Installed",v:"12 weeks",s:"Active"}].map(s=>(<div key={s.l}><div style={{fontSize:10,color:SL.grey[500]}}>{s.l}</div><div style={{fontSize:14,fontWeight:700,color:SL.grey[800]}}>{s.v}</div><div style={{fontSize:10,color:SL.green[500]}}>{s.s}</div></div>))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function RewardsPage({cashBalance}){
+  const[tab,setTab]=useState("vouchers");
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{fontSize:20,fontWeight:800,color:SL.grey[900]}}>Rewards</div>
+      <div style={{background:`linear-gradient(135deg,${SL.green[700]},${SL.green[900]})`,borderRadius:20,padding:24,color:SL.white}}>
+        <div style={{fontSize:12,opacity:0.8}}>Your SmartLoop Account</div>
+        <div style={{fontSize:36,fontWeight:800,marginTop:4}}>${cashBalance}<span style={{fontSize:16,opacity:0.6}}>.00</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:16,paddingTop:12,borderTop:"1px solid rgba(255,255,255,0.15)"}}>
+          <div><div style={{fontSize:10,opacity:0.6}}>Started</div><div style={{fontSize:14,fontWeight:700}}>$120.00</div></div>
+          <div><div style={{fontSize:10,opacity:0.6}}>Deducted</div><div style={{fontSize:14,fontWeight:700,color:SL.orange[300]}}>-$8.40</div></div>
+          <div><div style={{fontSize:10,opacity:0.6}}>Recovered</div><div style={{fontSize:14,fontWeight:700,color:SL.green[300]}}>+$3.20</div></div>
+        </div>
+        <div style={{marginTop:12,fontSize:11,opacity:0.7}}>Payout: Week 27 \u2014 estimated ${cashBalance}</div>
+      </div>
+      <div style={{display:"flex",gap:4,background:SL.grey[100],borderRadius:12,padding:3}}>
+        {["vouchers","badges"].map(t=>(<button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:"8px 0",borderRadius:10,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,background:tab===t?SL.white:"transparent",color:tab===t?SL.green[700]:SL.grey[500],boxShadow:tab===t?"0 2px 8px rgba(0,0,0,0.06)":"none",transition:"all 0.2s",textTransform:"capitalize"}}>{t}</button>))}
+      </div>
+      {tab==="vouchers"?(
+        <React.Fragment>
+          <div style={{fontSize:12,color:SL.grey[500]}}>Up to $500 in local vouchers \u2014 merchant funded</div>
+          {vouchers.map((v,i)=>(
+            <Card key={i} style={{opacity:v.redeemed?0.5:1}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:700,color:SL.grey[900]}}>{v.merchant}</div>
+                  <div style={{fontSize:12,color:SL.grey[600],marginTop:4}}>{v.offer}</div>
+                  <div style={{display:"flex",gap:8,marginTop:8}}>
+                    <span style={{fontSize:10,color:SL.green[500],fontWeight:600}}>Value: {v.value}</span>
+                    <span style={{fontSize:10,color:SL.grey[400]}}>Expires: {v.expiry}</span>
+                  </div>
+                </div>
+                <div style={{padding:"6px 14px",borderRadius:20,fontSize:11,fontWeight:700,background:v.redeemed?SL.grey[100]:SL.green[500],color:v.redeemed?SL.grey[500]:SL.white}}>{v.redeemed?"Redeemed":"Redeem"}</div>
+              </div>
+            </Card>
+          ))}
+        </React.Fragment>
+      ):(
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+          {badges.map((b,i)=>(
+            <Card key={i} style={{padding:14,textAlign:"center",opacity:b.earned?1:0.4,background:b.earned?SL.green[50]:SL.grey[50]}}>
+              <div style={{fontSize:28}}>{b.icon}</div>
+              <div style={{fontSize:11,fontWeight:700,color:SL.grey[800],marginTop:6}}>{b.name}</div>
+              <div style={{fontSize:9,color:SL.grey[500],marginTop:2}}>{b.desc}</div>
+              {b.earned&&<div style={{marginTop:6}}><Icon name="check-circle" size={14} color={SL.green[500]}/></div>}
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InsightsPage(){
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{fontSize:20,fontWeight:800,color:SL.grey[900]}}>Insights</div>
+      <Card>
+        <div style={{fontSize:14,fontWeight:700,color:SL.grey[900],marginBottom:4}}>Weekly Fill Rate</div>
+        <div style={{fontSize:11,color:SL.grey[500],marginBottom:16}}>Your performance vs. target over time</div>
+        <MiniChart data={weeklyData}/>
+        <div style={{display:"flex",gap:16,justifyContent:"center",marginTop:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:16,height:3,borderRadius:2,background:SL.green[500]}}/><span style={{fontSize:10,color:SL.grey[500]}}>Your fill rate</span></div>
+          <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:16,height:0,borderTop:`2px dashed ${SL.orange[400]}`}}/><span style={{fontSize:10,color:SL.grey[500]}}>Target</span></div>
+        </div>
+      </Card>
+      <Card>
+        <div style={{fontSize:14,fontWeight:700,color:SL.grey[900],marginBottom:12}}>Trial Progress</div>
+        {[{p:"Baseline",w:"1\u20134",t:"Measurement only",s:"completed"},{p:"Foundation",w:"5\u201312",t:"10% reduction",s:"completed"},{p:"Progress",w:"13\u201320",t:"15% reduction",s:"active"},{p:"Performance",w:"21\u201326",t:"20% reduction",s:"upcoming"},{p:"Payout",w:"Week 27",t:"Cash withdrawal",s:"upcoming"}].map((ph,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<4?"1px solid "+SL.grey[100]:"none"}}>
+            <div style={{width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,background:ph.s==="completed"?SL.green[500]:ph.s==="active"?SL.orange[500]:SL.grey[200],color:ph.s==="upcoming"?SL.grey[500]:SL.white}}>{ph.s==="completed"?"\u2713":i+1}</div>
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:SL.grey[800]}}>{ph.p}</div><div style={{fontSize:10,color:SL.grey[500]}}>Weeks {ph.w} \u2014 {ph.t}</div></div>
+            {ph.s==="active"&&<StatusPill label="Current" color={SL.orange[500]} bg={SL.orange[100]}/>}
+          </div>
+        ))}
+      </Card>
+      <Card>
+        <div style={{fontSize:14,fontWeight:700,color:SL.grey[900],marginBottom:12}}>Neighbourhood Comparison</div>
+        {[{l:"Your household",v:58,you:true},{l:"Area average",v:72,you:false},{l:"Best in area",v:38,you:false}].map((it,i)=>(
+          <div key={i} style={{marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:12,fontWeight:it.you?700:500,color:it.you?SL.green[700]:SL.grey[600]}}>{it.l}</span><span style={{fontSize:12,fontWeight:700,color:it.you?SL.green[700]:SL.grey[600]}}>{it.v}%</span></div>
+            <div style={{height:8,background:SL.grey[100],borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:it.v+"%",borderRadius:4,transition:"width 1s",background:it.you?`linear-gradient(90deg,${SL.green[500]},${SL.teal[500]})`:SL.grey[300]}}/></div>
+          </div>
+        ))}
+        <div style={{marginTop:8,padding:"8px 12px",background:SL.green[50],borderRadius:8,fontSize:11,color:SL.green[700]}}>You're producing 19% less waste than your neighbourhood average. Keep going!</div>
+      </Card>
+      <Card>
+        <div style={{fontSize:14,fontWeight:700,color:SL.grey[900],marginBottom:12}}>Personalised AI Tips</div>
+        {tips.map((tip,i)=>(
+          <div key={i} style={{display:"flex",gap:10,padding:"10px 0",borderBottom:i<tips.length-1?"1px solid "+SL.grey[100]:"none"}}>
+            <div style={{width:8,height:8,borderRadius:"50%",marginTop:5,flexShrink:0,background:tip.priority==="high"?SL.orange[500]:tip.priority==="positive"?SL.green[500]:SL.teal[500]}}/>
+            <span style={{fontSize:12,color:SL.grey[700],lineHeight:1.5}}>{tip.text}</span>
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+}
+
+/* ═══ MAIN APP ═══ */
+
+function SmartLoopHome(){
+  const[page,setPage]=useState("home");
+  const[showMagnet,setShowMagnet]=useState(false);
+  const cashBalance=114.80;
+  return(
+    <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:SL.grey[50],fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",display:"flex",flexDirection:"column"}}>
+      <div style={{padding:"16px 20px 12px",background:SL.white,position:"sticky",top:0,zIndex:100,borderBottom:`1px solid ${SL.grey[100]}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <SmartLoopLogo size={26}/>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{position:"relative"}}><Icon name="bell" size={20} color={SL.grey[500]}/><div style={{position:"absolute",top:-2,right:-2,width:8,height:8,borderRadius:"50%",background:SL.orange[500],border:`2px solid ${SL.white}`}}/></div>
+            <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${SL.green[500]},${SL.teal[500]})`,display:"flex",alignItems:"center",justifyContent:"center",color:SL.white,fontSize:13,fontWeight:700}}>L</div>
+          </div>
+        </div>
+      </div>
+      <div style={{flex:1,padding:16,paddingBottom:24,overflowY:"auto"}}>
+        {page==="home"&&<HomePage cashBalance={cashBalance} weekNumber={12} phase="Phase 2 \u2014 Progress"/>}
+        {page==="bins"&&<BinsPage/>}
+        {page==="rewards"&&<RewardsPage cashBalance={cashBalance}/>}
+        {page==="insights"&&<InsightsPage/>}
+      </div>
+      <div style={{padding:"4px 16px 6px",textAlign:"center",borderTop:`1px solid ${SL.grey[100]}`,background:SL.white}}>
+        <span style={{fontSize:9,color:SL.grey[300]}}>Powered by <strong style={{color:SL.grey[500]}}>SmartLoop</strong> \u00B7 Smart Waste Intelligence</span>
+      </div>
+      <NavBar active={page} setActive={setPage} onMagnet={()=>setShowMagnet(true)}/>
+      {showMagnet&&<FridgeMagnet bins={binTypes} onClose={()=>setShowMagnet(false)}/>}
+    </div>
+  );
+}
+
+ReactDOM.render(React.createElement(SmartLoopHome),document.getElementById("root"));
+</script>
+</body>
+</html>
