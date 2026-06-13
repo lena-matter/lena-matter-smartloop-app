@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartLoop — Live Dashboard · Matter IO</title>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;600;700;800;900&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --aqua-deep:#0B8A8A; --aqua:#17B5B5; --aqua-mid:#2DD4BF; --turq:#40E0D0;
+  --turq-light:#7FEFDF; --turq-pale:#B2F5EA; --turq-wash:#E0FAF5; --mint:#F0FFF9;
+  --cream:#FFFDF7; --paper:#FFF8EE; --craft:#F5E6D0; --craft-dark:#E8D5B8;
+  --coral:#FF7F7F; --coral-pale:#FFE0E0; --sunny:#FFD93D; --sunny-pale:#FFF4C8;
+  --leaf:#4CAF50; --leaf-pale:#D5F0D5; --sky:#64B5F6; --sky-pale:#DCEEFB;
+  --plum:#B388FF; --plum-pale:#EDE0FF; --earth:#8D6E63; --earth-pale:#EFEBE9;
+  --text:#2D3436; --text-light:#636E72;
+  --shadow:0 2px 8px rgba(0,0,0,0.08); --shadow-lg:0 6px 20px rgba(0,0,0,0.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--text);-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(circle at 20% 80%,rgba(64,224,208,0.06) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(45,212,191,0.06) 0%,transparent 50%);}
+.sticker{display:inline-flex;align-items:center;justify-content:center;padding:6px 14px;border-radius:20px;font-weight:700;font-size:12px;transform:rotate(-2deg);box-shadow:1px 2px 4px rgba(0,0,0,0.1);border:2px dashed rgba(255,255,255,0.5);}
+
+/* Sidebar */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--paper);border-right:3px dashed var(--turq-pale);display:flex;flex-direction:column;z-index:100;box-shadow:var(--shadow);}
+.sidebar-logo{padding:20px 16px;text-align:center;border-bottom:3px dashed var(--turq-pale);}
+.logo-circle{width:56px;height:56px;border-radius:50%;margin:0 auto 8px;background:linear-gradient(135deg,var(--aqua),var(--turq));display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-weight:900;box-shadow:0 3px 10px rgba(23,181,181,0.3);border:3px solid #fff;}
+.logo-name{font-family:'Caveat',cursive;font-size:26px;font-weight:700;color:var(--aqua-deep);letter-spacing:-0.5px;}
+.logo-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--turq);background:var(--turq-wash);padding:2px 8px;border-radius:8px;display:inline-block;margin-top:2px;}
+.sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto;}
+.nav-group{margin-bottom:16px;}
+.nav-group-label{font-family:'Caveat',cursive;font-size:15px;font-weight:700;color:var(--aqua);padding:0 8px;margin-bottom:4px;}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;transition:all .15s;font-size:13px;font-weight:600;color:var(--text-light);border:none;background:none;width:100%;text-align:left;font-family:'Nunito',sans-serif;margin-bottom:2px;}
+.nav-btn:hover{background:var(--turq-wash);color:var(--aqua-deep);}
+.nav-btn.active{background:linear-gradient(135deg,var(--turq-wash),var(--turq-pale));color:var(--aqua-deep);border:2px dashed var(--turq);transform:rotate(-0.5deg);}
+.nav-btn .nav-emoji{font-size:18px;width:24px;text-align:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:800;background:var(--coral);color:#fff;padding:1px 7px;border-radius:10px;transform:rotate(3deg);}
+.sidebar-footer{padding:12px 16px;border-top:3px dashed var(--turq-pale);display:flex;align-items:center;gap:10px;}
+.user-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+.user-name{font-size:12px;font-weight:700;}
+.user-level{font-size:10px;color:var(--aqua);font-weight:600;}
+.profile-switcher{padding:8px 10px 4px;border-top:2px dashed var(--turq-pale);}
+.profile-switcher-label{font-family:'Caveat',cursive;font-size:13px;font-weight:700;color:var(--aqua);margin-bottom:6px;text-align:center;}
+.profile-option{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:all .15s;margin-bottom:4px;border:2px solid transparent;}
+.profile-option:hover{background:var(--turq-wash);}
+.profile-option.active-profile{background:linear-gradient(135deg,var(--turq-wash),var(--turq-pale));border:2px dashed var(--turq);}
+.profile-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.1);flex-shrink:0;}
+.profile-name{font-size:11px;font-weight:700;}
+.profile-detail{font-size:9px;color:var(--text-light);font-weight:600;}
+
+/* Main */
+.main{margin-left:220px;min-height:100vh;}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,248,238,0.9);backdrop-filter:blur(10px);border-bottom:3px dashed var(--turq-pale);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.topbar-title{font-family:'Caveat',cursive;font-size:24px;font-weight:700;color:var(--aqua-deep);}
+.topbar-sub{font-size:11px;color:var(--text-light);font-weight:600;}
+.topbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.topbar-stat{display:flex;align-items:center;gap:4px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;border:2px dashed;}
+.riplet-stat{background:var(--sunny-pale);border-color:var(--sunny);color:#B8860B;}
+.xp-stat{background:var(--turq-wash);border-color:var(--turq);color:var(--aqua-deep);}
+.streak-stat{background:var(--coral-pale);border-color:var(--coral);color:#CC4444;}
+.region-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;border:2px dashed var(--plum);background:var(--plum-pale);color:#6A1B9A;cursor:pointer;}
+.region-pill select{border:none;background:transparent;font-family:'Nunito';font-weight:700;font-size:11px;color:#6A1B9A;cursor:pointer;outline:none;}
+.content{padding:24px 28px;}
+
+/* Cards + grids */
+.card{background:var(--paper);border:2px dashed var(--turq-pale);border-radius:16px;position:relative;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;}
+.card:hover{transform:rotate(-0.3deg) translateY(-2px);box-shadow:var(--shadow-lg);}
+.card-head{padding:16px 18px 0;display:flex;align-items:flex-start;justify-content:space-between;}
+.card-t{font-family:'Caveat',cursive;font-size:20px;font-weight:700;color:var(--aqua-deep);}
+.card-st{font-size:11px;color:var(--text-light);font-weight:600;margin-top:1px;}
+.card-bd{padding:14px 18px 18px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.g-main{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px;}
+
+.impact-card{padding:18px;text-align:center;}
+.impact-emoji{font-size:32px;margin-bottom:6px;display:block;}
+.impact-val{font-family:'Caveat',cursive;font-size:32px;font-weight:700;line-height:1;color:var(--aqua-deep);}
+.impact-label{font-size:11px;font-weight:700;color:var(--text-light);margin-top:4px;}
+.impact-fun{font-size:10px;color:var(--aqua);font-weight:600;margin-top:4px;font-style:italic;}
+
+/* Bins */
+.bin-card{padding:14px;display:flex;align-items:center;gap:12px;}
+.bin-visual{width:48px;height:64px;border-radius:6px 6px 10px 10px;position:relative;overflow:hidden;border:2px solid rgba(0,0,0,0.1);background:var(--turq-wash);}
+.bin-fill{position:absolute;bottom:0;left:0;right:0;transition:height .5s;border-radius:0 0 8px 8px;}
+.bin-info{flex:1;}
+.bin-name{font-size:13px;font-weight:700;}
+.bin-loc{font-size:10px;color:var(--text-light);}
+.bin-pct{font-family:'Caveat',cursive;font-size:24px;font-weight:700;}
+
+/* Activity feed + log cards */
+.activity-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:2px dotted var(--turq-pale);}
+.activity-item:last-child{border-bottom:none;}
+.activity-emoji{font-size:24px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--turq-wash);border-radius:12px;flex-shrink:0;}
+.activity-text{font-size:12px;font-weight:600;flex:1;}
+.activity-pts{font-size:11px;font-weight:800;color:var(--aqua-deep);background:var(--turq-wash);padding:3px 10px;border-radius:12px;}
+.activity-card{cursor:pointer;text-align:center;padding:24px;transition:all .2s;position:relative;overflow:hidden;background:var(--cream);border:2px dashed var(--turq-pale);border-radius:16px;}
+.activity-card:hover{border-color:var(--turq)!important;transform:rotate(-1deg) scale(1.02);}
+.activity-card.logged{opacity:0.6;pointer-events:none;}
+.activity-card.logged::after{content:'✓ Logged!';position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;color:var(--leaf);background:var(--leaf-pale);padding:2px 8px;border-radius:8px;transform:rotate(3deg);}
+
+/* Badges */
+.badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+.badge-item{padding:14px 10px;text-align:center;border-radius:16px;background:var(--cream);border:2px dashed var(--turq-pale);transition:all .15s;}
+.badge-item.earned{border-color:var(--sunny);background:var(--sunny-pale);}
+.badge-item.earned .badge-icon{filter:none;}
+.badge-icon{font-size:36px;display:block;margin-bottom:6px;filter:grayscale(0.6);}
+.badge-name{font-size:11px;font-weight:700;}
+.badge-pts{font-size:10px;color:var(--aqua);font-weight:600;}
+.mini-bar{height:6px;background:var(--turq-wash);border-radius:6px;overflow:hidden;margin-top:6px;}
+.mini-bar>div{height:100%;background:linear-gradient(90deg,var(--aqua),var(--leaf));border-radius:6px;}
+
+/* Leaderboard */
+.lb-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:2px dotted var(--turq-pale);}
+.lb-row:last-child{border-bottom:none;}
+.lb-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.lb-rank-1{background:var(--sunny);color:#333;}
+.lb-rank-2{background:#E0E0E0;color:#333;}
+.lb-rank-3{background:#FFCC80;color:#333;}
+.lb-rank-n{background:var(--turq-wash);color:var(--aqua-deep);}
+.lb-name{font-size:12px;font-weight:700;flex:1;}
+.lb-class{font-size:10px;color:var(--text-light);}
+.lb-score{font-family:'Caveat',cursive;font-size:18px;font-weight:700;color:var(--aqua-deep);}
+
+/* Country rows */
+.country-row{display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:2px dotted var(--turq-pale);}
+.country-row:last-child{border-bottom:none;}
+.country-row.highlight{background:var(--sunny-pale);border-radius:10px;padding:10px 12px;}
+.country-flag{font-size:28px;width:36px;text-align:center;flex-shrink:0;}
+.country-rank{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.country-bar-track{height:8px;background:var(--turq-wash);border-radius:6px;overflow:hidden;margin-top:4px;border:1px dashed var(--turq-pale);}
+.country-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+
+/* Curriculum */
+.curr-week{margin-bottom:14px;border-radius:16px;overflow:hidden;border:2px dashed var(--turq-pale);background:var(--paper);box-shadow:var(--shadow);}
+.curr-week.week-done{border-color:var(--leaf);}
+.curr-week.week-active{border-color:var(--sunny);box-shadow:0 0 0 3px var(--sunny-pale),var(--shadow-lg);}
+.curr-week-head{display:flex;align-items:center;gap:14px;padding:16px 18px;}
+.curr-week-num{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Caveat',cursive;font-size:20px;font-weight:700;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+.curr-week-num.done{background:var(--leaf);}
+.curr-week-num.active{background:var(--sunny);color:#333;}
+.curr-week-num.upcoming{background:var(--craft-dark);}
+.curr-week-info{flex:1;min-width:0;}
+.curr-week-title{font-size:14px;font-weight:800;color:var(--aqua-deep);}
+.curr-week-theme{font-size:11px;color:var(--text-light);font-weight:600;margin-top:1px;}
+.curr-week-strands{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+.curr-strand{font-size:8px;font-weight:700;padding:2px 7px;border-radius:8px;text-transform:uppercase;letter-spacing:0.3px;background:var(--turq-wash);color:var(--aqua-deep);}
+
+/* Charts */
+.ch-grid{stroke:var(--turq-pale);stroke-dasharray:4,4;stroke-width:1;}
+.ch-label{font-size:10px;fill:var(--text-light);font-family:'Nunito';font-weight:600;}
+.ch-line{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.ch-area{opacity:0.12;}
+
+/* Toast + confetti */
+.toast-container{position:fixed;top:20px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{padding:12px 18px;border-radius:14px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,0.15);animation:toastIn .4s ease,toastOut .4s ease 2.6s forwards;display:flex;align-items:center;gap:10px;border:2px dashed rgba(255,255,255,0.4);max-width:340px;}
+.toast-riplet{background:linear-gradient(135deg,#FFF4C8,#FFD93D);color:#7A6200;}
+.toast-club{background:linear-gradient(135deg,var(--plum-pale),var(--plum));color:#fff;}
+.toast-error{background:linear-gradient(135deg,var(--coral-pale),var(--coral));color:#fff;}
+.toast-emoji{font-size:22px;}
+@keyframes toastIn{from{transform:translateX(120%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+@keyframes toastOut{from{opacity:1;}to{opacity:0;transform:translateY(-10px);}}
+.confetti-piece{position:fixed;z-index:9998;pointer-events:none;width:10px;height:10px;border-radius:2px;animation:confettiFall 1.8s ease-out forwards;}
+@keyframes confettiFall{0%{transform:translateY(0) rotate(0) scale(1);opacity:1;}100%{transform:translateY(600px) rotate(720deg) scale(0.3);opacity:0;}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.pulse{animation:pulse .4s ease;}
+
+.page{display:none;}
+.page.active{display:block;}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--leaf);box-shadow:0 0 0 0 rgba(76,175,80,0.6);animation:livep 1.6s infinite;}
+@keyframes livep{0%{box-shadow:0 0 0 0 rgba(76,175,80,0.5)}70%{box-shadow:0 0 0 8px rgba(76,175,80,0)}100%{box-shadow:0 0 0 0 rgba(76,175,80,0)}}
+
+.banner{padding:10px 16px;border-radius:12px;font-size:12px;font-weight:700;margin-bottom:16px;border:2px dashed;}
+.banner-mock{background:var(--sunny-pale);border-color:var(--sunny);color:#9A7B00;}
+.banner-live{background:var(--leaf-pale);border-color:var(--leaf);color:#2E7D32;}
+
+/* Auth overlay (live mode only) */
+.auth-overlay{position:fixed;inset:0;z-index:10000;background:rgba(11,138,138,0.18);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;}
+.auth-overlay.show{display:flex;}
+.auth-card{width:340px;max-width:90vw;background:var(--paper);border:3px dashed var(--turq-pale);border-radius:20px;box-shadow:var(--shadow-lg);padding:26px 24px;text-align:center;}
+.auth-card .logo-circle{margin-bottom:10px;}
+.auth-card h2{font-family:'Caveat',cursive;font-size:28px;color:var(--aqua-deep);}
+.auth-card p{font-size:11px;color:var(--text-light);font-weight:600;margin:4px 0 16px;}
+.auth-card input{width:100%;padding:11px 12px;margin-bottom:10px;border:2px dashed var(--turq-pale);border-radius:12px;font-family:'Nunito';font-size:13px;font-weight:600;background:var(--cream);outline:none;}
+.auth-card input:focus{border-color:var(--turq);}
+.auth-btn{width:100%;padding:12px;border-radius:12px;border:2px dashed var(--aqua);background:linear-gradient(135deg,var(--turq-wash),var(--turq-pale));color:var(--aqua-deep);font-family:'Nunito';font-weight:800;font-size:14px;cursor:pointer;transition:all .15s;}
+.auth-btn:hover{transform:scale(1.02);box-shadow:var(--shadow);}
+.auth-err{font-size:11px;color:#CC4444;font-weight:700;min-height:14px;margin-top:8px;}
+.signout-btn{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;border:2px dashed var(--coral);background:var(--coral-pale);color:#CC4444;cursor:pointer;font-family:'Nunito';}
+
+/* Admin screen */
+.adm-lbl{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);margin:8px 0 4px;}
+.adm-in{width:100%;padding:9px 11px;border:2px dashed var(--turq-pale);border-radius:10px;font-family:'Nunito';font-size:13px;font-weight:600;background:var(--cream);outline:none;margin-bottom:2px;}
+.adm-in:focus{border-color:var(--turq);}
+.adm-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:2px dotted var(--turq-pale);flex-wrap:wrap;}
+.adm-row:last-child{border-bottom:none;}
+.adm-row .grow{flex:1;min-width:120px;}
+.adm-tag{font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;text-transform:uppercase;letter-spacing:0.5px;}
+.adm-tag.on{background:var(--leaf-pale);color:#2E7D32;}
+.adm-tag.off{background:var(--coral-pale);color:#CC4444;}
+.adm-mini{padding:5px 10px;border-radius:12px;border:2px dashed var(--turq);background:var(--turq-wash);color:var(--aqua-deep);font-size:10px;font-weight:800;cursor:pointer;font-family:'Nunito';white-space:nowrap;}
+.adm-mini:hover{background:var(--turq);color:#fff;}
+.adm-mini.danger{border-color:var(--coral);background:var(--coral-pale);color:#CC4444;}
+.adm-sel{padding:6px 8px;border:2px dashed var(--turq-pale);border-radius:8px;font-family:'Nunito';font-size:11px;font-weight:700;background:var(--cream);}
+
+/* Rewards */
+.reward-item{padding:14px;display:flex;align-items:center;gap:12px;border-radius:16px;background:var(--cream);border:2px dashed var(--turq-pale);transition:all .15s;margin-bottom:8px;}
+.reward-item:hover{border-color:var(--sunny);transform:rotate(-0.5deg);}
+.reward-emoji{font-size:28px;flex-shrink:0;}
+.reward-name{font-size:13px;font-weight:700;}
+.reward-desc{font-size:10px;color:var(--text-light);}
+.reward-cost{font-family:'Caveat',cursive;font-size:18px;font-weight:700;color:#B8860B;white-space:nowrap;}
+.reward-btn{padding:6px 12px;border-radius:14px;border:2px dashed var(--sunny);background:var(--sunny-pale);color:#B8860B;font-size:10px;font-weight:800;cursor:pointer;font-family:'Nunito';transition:all .15s;white-space:nowrap;}
+.reward-btn:hover{background:var(--sunny);color:#fff;transform:scale(1.05);}
+.reward-btn.redeemed{background:var(--leaf-pale);border-color:var(--leaf);color:var(--leaf);cursor:default;pointer-events:none;}
+.reward-btn.cant{opacity:0.5;cursor:not-allowed;pointer-events:none;}
+
+/* Clubs */
+.club-card{padding:16px;text-align:center;border-radius:16px;position:relative;overflow:hidden;border:3px dashed;}
+.club-emoji{font-size:32px;margin-bottom:6px;display:block;}
+.club-name{font-family:'Caveat',cursive;font-size:20px;font-weight:700;}
+.club-price{font-size:11px;font-weight:700;margin-top:4px;}
+.club-perk{font-size:10px;color:var(--text-light);margin-top:4px;}
+.club-join{margin-top:10px;padding:6px 18px;border-radius:20px;border:2px dashed;font-family:'Nunito';font-size:11px;font-weight:800;cursor:pointer;transition:all .15s;background:transparent;}
+.club-join:hover{transform:scale(1.05);}
+.club-join.joined{background:var(--aqua)!important;color:#fff!important;border-style:solid!important;cursor:default;}
+
+/* Exchange */
+.exchange-msg{display:flex;gap:10px;padding:10px 0;border-bottom:2px dotted var(--turq-pale);}
+.exchange-msg:last-child{border-bottom:none;}
+.quest-item{padding:12px;border-radius:12px;margin-bottom:8px;background:var(--cream);border:2px dashed var(--turq-pale);cursor:pointer;transition:all .15s;}
+.quest-item:hover{border-color:var(--turq);transform:translateX(3px);}
+.quest-item.quest-done{opacity:0.6;}
+.partner-card{padding:14px 10px;text-align:center;border-radius:14px;background:var(--cream);border:2px dashed var(--turq-pale);transition:all .2s;}
+.partner-card:hover{transform:scale(1.04) rotate(-1deg);border-color:var(--turq);}
+
+/* Recycling game */
+.game-hud{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+.game-hud-item{display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:14px;font-size:13px;font-weight:800;border:2px dashed;white-space:nowrap;}
+.game-arena{padding:20px;position:relative;min-height:340px;text-align:center;}
+.game-item{font-size:84px;margin:10px 0;display:inline-block;}
+.game-item-enter{animation:itemDrop .4s ease;}
+@keyframes itemDrop{0%{opacity:0;transform:translateY(-40px) scale(0.7)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.game-timer-track{height:8px;background:var(--turq-wash);border-radius:6px;margin:14px auto;overflow:hidden;border:2px dashed var(--turq-pale);max-width:420px;}
+.game-timer-fill{height:100%;background:linear-gradient(90deg,var(--aqua),var(--turq));border-radius:4px;width:100%;}
+.game-timer-fill.danger{background:linear-gradient(90deg,var(--coral),#FF4444);}
+.game-streak{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:6px;}
+.game-streak-dot{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:var(--craft);color:var(--text-light);border:2px dashed var(--craft-dark);}
+.game-streak-dot.lit{background:var(--sunny);color:#333;border-color:var(--sunny);transform:scale(1.12);}
+.game-bins{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px;max-width:520px;margin-left:auto;margin-right:auto;}
+.game-bin{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px;border-radius:16px;border:3px dashed;cursor:pointer;transition:all .12s;font-family:'Nunito';background:var(--cream);}
+.game-bin:hover{transform:scale(1.06);box-shadow:0 4px 16px rgba(0,0,0,0.12);}
+.game-bin:active{transform:scale(0.95);}
+.game-bin.correct{animation:binCorrect .5s ease;}
+@keyframes binCorrect{0%{transform:scale(1)}20%{transform:scale(1.12);box-shadow:0 0 20px rgba(76,175,80,0.4)}100%{transform:scale(1)}}
+.game-bin.wrong{animation:binWrong .5s ease;}
+@keyframes binWrong{0%,100%{transform:translateX(0)}15%{transform:translateX(-6px)}30%{transform:translateX(6px)}45%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
+.game-bin-emoji{font-size:30px;}
+.game-bin-label{font-size:11px;font-weight:800;}
+.game-start-btn{padding:14px 28px;border-radius:16px;font-family:'Nunito';font-size:15px;font-weight:800;cursor:pointer;border:3px dashed var(--turq);background:linear-gradient(135deg,var(--turq-wash),var(--turq-pale));color:var(--aqua-deep);transition:all .15s;}
+.game-start-btn:hover{transform:scale(1.05) rotate(-1deg);box-shadow:var(--shadow-lg);}
+.diff-btn{padding:8px 16px;border-radius:14px;border:2px dashed var(--turq-pale);background:var(--cream);font-family:'Nunito';font-weight:800;font-size:12px;cursor:pointer;margin:0 4px;}
+.diff-btn.sel{border-color:var(--turq);background:var(--turq-wash);color:var(--aqua-deep);}
+
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr);}.g3,.g-main{grid-template-columns:1fr;}}
+@media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;}.g2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-circle">SL</div>
+    <div class="logo-name">SmartLoop</div>
+    <div class="logo-tag">by Matter</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">My Journey</div>
+      <button class="nav-btn active" data-page="dashboard"><span class="nav-emoji">🌍</span> My Dashboard</button>
+      <button class="nav-btn" data-page="activities"><span class="nav-emoji">📝</span> Log Activity</button>
+      <button class="nav-btn" data-page="badges"><span class="nav-emoji">🏆</span> EcoHero Badges</button>
+      <button class="nav-btn" data-page="rewards"><span class="nav-emoji">🎁</span> Rewards Shop</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">School</div>
+      <button class="nav-btn" data-page="bins"><span class="nav-emoji">🗑️</span> Live Bin Status <span class="nav-badge" id="bins-badge">5</span></button>
+      <button class="nav-btn" data-page="leaderboard"><span class="nav-emoji">📊</span> Leaderboard</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Global</div>
+      <button class="nav-btn" data-page="global"><span class="nav-emoji">🌏</span> Global Challenge <span class="nav-badge">LIVE</span></button>
+      <button class="nav-btn" data-page="exchange"><span class="nav-emoji">🤝</span> School Exchange</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Play</div>
+      <button class="nav-btn" data-page="game"><span class="nav-emoji">🎮</span> Recycling Game <span class="nav-badge">NEW</span></button>
+      <button class="nav-btn" data-page="clubs"><span class="nav-emoji">⭐</span> Riplet Clubs</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Teachers</div>
+      <button class="nav-btn" data-page="curriculum"><span class="nav-emoji">📖</span> Curriculum <span class="nav-badge">8 WK</span></button>
+    </div>
+    <div class="nav-group" id="admin-nav" style="display:none">
+      <div class="nav-group-label">Admin</div>
+      <button class="nav-btn" data-page="admin"><span class="nav-emoji">🛠️</span> Manage</button>
+    </div>
+  </nav>
+  <div class="profile-switcher">
+    <div class="profile-switcher-label">Switch EcoHero</div>
+    <div id="profile-list"></div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-avatar" id="footer-avatar">🌊</div>
+    <div>
+      <div class="user-name" id="footer-name">EcoHero</div>
+      <div class="user-level" id="footer-level">Level 1</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">My Earth-Saving Journey</div>
+      <div class="topbar-sub" id="page-sub">Welcome back! Your planet thanks you.</div>
+    </div>
+    <div class="topbar-right">
+      <div class="region-pill" title="Data residency: which Supabase region this school's data lives in">
+        🌐 <select id="school-select"></select>
+      </div>
+      <div class="topbar-stat streak-stat" id="stat-streak">🔥 0 day streak</div>
+      <div class="topbar-stat riplet-stat" id="stat-riplets">💧 0 Riplets</div>
+      <div class="topbar-stat xp-stat" id="stat-xp">⚡ 0 XP</div>
+    </div>
+  </div>
+  <div class="content">
+    <div id="conn-banner" class="banner banner-mock">⚙️ Running on local demo data — add your Supabase URL + anon key in the CONFIG block of this file to go live.</div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="g4" id="impact-tiles"></div>
+      <div class="g-main">
+        <div class="card">
+          <div class="card-head"><div><div class="card-t">EcoHero Progress</div><div class="card-st" id="progress-sub"></div></div></div>
+          <div class="card-bd">
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--text-light);margin-bottom:6px"><span id="prog-level"></span><span id="prog-xp"></span></div>
+            <div class="country-bar-track" style="height:14px"><div class="country-bar-fill" id="prog-bar" style="background:linear-gradient(90deg,var(--aqua),var(--leaf))"></div></div>
+            <div style="font-size:11px;color:var(--aqua);font-weight:700;margin-top:8px" id="prog-msg"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-t">Recent Activity</div><div class="card-st">Latest eco actions</div></div></div>
+          <div class="card-bd" id="recent-activity"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG ACTIVITY -->
+    <div class="page" id="page-activities">
+      <div class="card" style="margin-bottom:16px"><div class="card-bd" style="font-size:13px;color:var(--text-light);font-weight:600">Tap an action to log it — you'll earn Riplets and XP, and it updates your impact tiles in real time.</div></div>
+      <div class="g3" id="activity-cards"></div>
+    </div>
+
+    <!-- BADGES -->
+    <div class="page" id="page-badges">
+      <div class="card"><div class="card-head"><div><div class="card-t">EcoHero Badges</div><div class="card-st">Collect them all on your sustainability journey</div></div></div>
+        <div class="card-bd"><div class="badge-grid" id="badge-grid"></div></div></div>
+    </div>
+
+    <!-- LIVE BINS -->
+    <div class="page" id="page-bins">
+      <div class="card" style="margin-bottom:16px"><div class="card-head">
+        <div><div class="card-t">🗑️ Live Bin Status</div><div class="card-st">Real-time fill data from ThinkLid sensors across campus</div></div>
+        <div style="font-size:11px;font-weight:700;color:var(--leaf)"><span class="live-dot"></span> Live</div>
+      </div><div class="card-bd"><div class="g3" id="bin-grid"></div></div></div>
+      <div class="card"><div class="card-head"><div><div class="card-t">Fill Levels Over Time</div><div class="card-st">Today's campus fill trend (hourly)</div></div></div>
+        <div class="card-bd"><div id="bin-chart"></div></div></div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="page" id="page-leaderboard">
+      <div class="card"><div class="card-head"><div><div class="card-t">🏆 School Leaderboard</div><div class="card-st" id="lb-sub">Top EcoHeroes this week</div></div></div>
+        <div class="card-bd" id="leaderboard"></div></div>
+    </div>
+
+    <!-- GLOBAL -->
+    <div class="page" id="page-global">
+      <div class="card" style="margin-bottom:16px"><div class="card-bd" id="global-summary"></div></div>
+      <div class="g-main">
+        <div class="card"><div class="card-head"><div><div class="card-t">🏅 Country Leaderboard</div><div class="card-st">Total eco-points across all schools per country</div></div><div style="font-size:11px;font-weight:700;color:var(--leaf)"><span class="live-dot"></span> Live</div></div>
+          <div class="card-bd" id="country-board"></div></div>
+        <div class="card"><div class="card-head"><div><div class="card-t">🌲 United Goal</div><div class="card-st" id="goal-sub"></div></div></div>
+          <div class="card-bd" id="goal-box"></div></div>
+      </div>
+      <div class="card"><div class="card-head"><div><div class="card-t">🗺️ Partner Schools Network</div><div class="card-st">One connected school per country</div></div></div>
+        <div class="card-bd"><div class="g4" id="partner-grid"></div></div></div>
+    </div>
+
+    <!-- CURRICULUM -->
+    <div class="page" id="page-curriculum">
+      <div class="card" style="margin-bottom:16px"><div class="card-head">
+        <div><div class="card-t">📖 Waste & Sustainability Curriculum</div><div class="card-st">8-week ACARA-aligned program · Years 3–6</div></div>
+        <div style="text-align:center"><div style="font-family:'Caveat',cursive;font-size:40px;font-weight:700;color:var(--aqua-deep)" id="curr-pct">0%</div><div style="font-size:10px;font-weight:700;color:var(--text-light)" id="curr-prog-text">0 of 8 weeks</div></div>
+      </div></div>
+      <div id="curriculum-weeks"></div>
+    </div>
+
+    <!-- REWARDS -->
+    <div class="page" id="page-rewards">
+      <div class="card" style="margin-bottom:16px"><div class="card-bd" style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;font-weight:700;color:var(--text-light)">Spend your Riplets on real-world and virtual rewards.</div>
+        <div class="topbar-stat riplet-stat" id="rewards-balance">💧 0</div>
+      </div></div>
+      <div class="g2">
+        <div class="card"><div class="card-head"><div><div class="card-t">🎁 Real Rewards</div><div class="card-st">Tangible eco goodies</div></div></div><div class="card-bd" id="rewards-real"></div></div>
+        <div class="card"><div class="card-head"><div><div class="card-t">✨ Virtual Rewards</div><div class="card-st">Customise your EcoHero</div></div></div><div class="card-bd" id="rewards-virtual"></div></div>
+      </div>
+    </div>
+
+    <!-- EXCHANGE -->
+    <div class="page" id="page-exchange">
+      <div class="card" style="margin-bottom:16px"><div class="card-head"><div><div class="card-t">🗺️ Partner Schools</div><div class="card-st">One connected school per country</div></div></div>
+        <div class="card-bd"><div class="g4" id="exchange-partners"></div></div></div>
+      <div class="g-main">
+        <div class="card"><div class="card-head"><div><div class="card-t">💬 Exchange Wall</div><div class="card-st">Messages &amp; tips from partner schools</div></div></div>
+          <div class="card-bd"><div id="exchange-wall"></div>
+            <div style="display:flex;gap:8px;margin-top:12px"><input id="exch-input" class="adm-in" style="margin:0" placeholder="Share a tip with partner schools…"><button class="auth-btn" id="exch-send" style="width:auto;padding:10px 16px">Post</button></div>
+          </div></div>
+        <div class="card"><div class="card-head"><div><div class="card-t">🎯 Cultural Eco-Quests</div><div class="card-st">Learn traditions from each country</div></div></div>
+          <div class="card-bd" id="exchange-quests"></div></div>
+      </div>
+    </div>
+
+    <!-- GAME -->
+    <div class="page" id="page-game">
+      <div class="card"><div class="card-bd">
+        <div id="game-intro" style="text-align:center;padding:20px">
+          <div style="font-size:54px">🎮</div>
+          <div class="card-t" style="font-size:26px">Sort It Out!</div>
+          <p style="font-size:13px;color:var(--text-light);font-weight:600;max-width:440px;margin:8px auto 16px">Items appear — tap the correct bin before time runs out. <b>Correct = +5 Riplets.</b> Wrong or too slow = lose a life. Build a streak for bonus multipliers!</p>
+          <div style="margin-bottom:16px">
+            <button class="diff-btn sel" data-diff="easy">🌱 Easy · 6s</button>
+            <button class="diff-btn" data-diff="medium">⚡ Medium · 4s</button>
+            <button class="diff-btn" data-diff="hard">🔥 Hard · 2.5s</button>
+          </div>
+          <button class="game-start-btn" id="game-start">▶ Start Game</button>
+        </div>
+
+        <div id="game-play" style="display:none">
+          <div class="game-hud">
+            <div class="game-hud-item" style="border-color:var(--sunny);background:var(--sunny-pale);color:#B8860B">💧 <span id="g-riplets">0</span></div>
+            <div class="game-hud-item" style="border-color:var(--turq);background:var(--turq-wash);color:var(--aqua-deep)">📦 <span id="g-count">0</span></div>
+            <div class="game-hud-item" style="border-color:var(--leaf);background:var(--leaf-pale);color:#2E7D32">🔥 x<span id="g-mult">1</span></div>
+            <div class="game-hud-item" style="border-color:var(--coral);background:var(--coral-pale);color:#CC4444">❤️ <span id="g-lives">3</span></div>
+          </div>
+          <div class="game-streak" id="g-streak"></div>
+          <div class="game-arena">
+            <div class="game-item game-item-enter" id="g-item">♻️</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-light)" id="g-itemname">—</div>
+            <div class="game-timer-track"><div class="game-timer-fill" id="g-timer"></div></div>
+            <div class="game-bins" id="g-bins"></div>
+          </div>
+        </div>
+
+        <div id="game-over" style="display:none;text-align:center;padding:20px">
+          <div style="font-size:48px">🏆</div>
+          <div class="card-t" style="font-size:24px">Great Sorting!</div>
+          <div class="g4" style="margin:16px 0">
+            <div class="card impact-card"><span class="impact-emoji">💧</span><div class="impact-val" id="go-riplets">0</div><div class="impact-label">Riplets Earned</div></div>
+            <div class="card impact-card"><span class="impact-emoji">✅</span><div class="impact-val" id="go-correct">0</div><div class="impact-label">Correct Sorts</div></div>
+            <div class="card impact-card"><span class="impact-emoji">🔥</span><div class="impact-val" id="go-streak">0</div><div class="impact-label">Best Streak</div></div>
+            <div class="card impact-card"><span class="impact-emoji">📊</span><div class="impact-val" id="go-acc">0%</div><div class="impact-label">Accuracy</div></div>
+          </div>
+          <div style="font-size:12px;color:var(--aqua);font-weight:700;margin-bottom:12px" id="go-saved"></div>
+          <button class="game-start-btn" id="game-again">🔄 Play Again</button>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- CLUBS -->
+    <div class="page" id="page-clubs">
+      <div class="card" style="margin-bottom:16px"><div class="card-bd" style="font-size:13px;color:var(--text-light);font-weight:600">Join a club to unlock bonus perks and challenges. Membership costs a one-off Riplet fee.</div></div>
+      <div class="g3" id="clubs-grid"></div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="page" id="page-admin">
+      <div id="admin-demo-note" class="banner banner-mock" style="display:none">🧪 Demo mode — this is a preview of the admin tools. Actions here are simulated locally. Connect Supabase (live mode) to manage real devices and users.</div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-head"><div><div class="card-t">📟 Register / Rotate a ThinkLid</div><div class="card-st">Issues a device key (shown once) and links the lid to a bin</div></div></div>
+          <div class="card-bd">
+            <label class="adm-lbl">School</label>
+            <select id="adm-school" class="adm-in"></select>
+            <label class="adm-lbl">ThinkLid serial</label>
+            <input id="adm-serial" class="adm-in" placeholder="TL-AU-0001">
+            <label class="adm-lbl">Linked bin</label>
+            <select id="adm-bin" class="adm-in"></select>
+            <button class="auth-btn" id="adm-register" style="margin-top:6px">Issue / rotate key</button>
+            <div id="adm-key-box" style="display:none;margin-top:12px;padding:12px;border:2px dashed var(--leaf);background:var(--leaf-pale);border-radius:12px">
+              <div style="font-size:10px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:0.5px">Device key — copy now, shown once</div>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+                <code id="adm-key" style="font-size:12px;word-break:break-all;flex:1"></code>
+                <button class="reward-btn" id="adm-copy" style="white-space:nowrap">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-t">🗂️ Registered Lids</div><div class="card-st" id="adm-dev-sub">Devices for this school</div></div></div>
+          <div class="card-bd"><div id="adm-devices"></div></div>
+        </div>
+      </div>
+      <div class="card" id="adm-users-card" style="display:none">
+        <div class="card-head"><div><div class="card-t">👥 Users &amp; Roles</div><div class="card-st">Assign roles and schools · super admin only</div></div></div>
+        <div class="card-bd"><div id="adm-users"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <div class="logo-circle">SL</div>
+    <h2>SmartLoop</h2>
+    <p>Teacher &amp; school sign-in</p>
+    <input id="auth-email" type="email" placeholder="you@school.edu" autocomplete="username">
+    <input id="auth-pass" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="auth-btn" id="auth-submit">Sign in</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+<div class="toast-container" id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   CONFIG — paste your Supabase project values here to go LIVE.
+   Leave blank to run on the bundled local demo data (mock mode).
+   Use the ANON / public key only — never the service_role secret key.
+   ════════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  SUPABASE_URL: "",        // e.g. "https://abcdxyz.supabase.co"
+  SUPABASE_ANON_KEY: "",   // e.g. "eyJhbGciOi..."
+};
+
+const LIVE = !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY);
+const sb = LIVE ? supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY) : null;
+
+/* ════════ MOCK DATA (mirrors schema.sql seed so the UI is identical offline) ════════ */
+const MOCK = {
+  regions:[
+    {code:'OCEANIA',name:'Australia & New Zealand',supabase_region:'ap-southeast-2 (Sydney)',privacy_regime:'AU Privacy Act 1988; NZ Privacy Act 2020',status:'live'},
+    {code:'APAC_SE',name:'Singapore & SE Asia',supabase_region:'ap-southeast-1 (Singapore)',privacy_regime:'Singapore PDPA',status:'live'},
+    {code:'NA',name:'United States & Canada',supabase_region:'us-east-1',privacy_regime:'COPPA; PIPEDA / Law 25',status:'planned'},
+    {code:'INDIA',name:'India',supabase_region:'ap-south-1 (Mumbai)',privacy_regime:'India DPDP Act 2023',status:'planned'},
+    {code:'EU',name:'European Union',supabase_region:'eu-central-1 (Frankfurt)',privacy_regime:'EU GDPR',status:'planned'},
+  ],
+  countries:[
+    {code:'AU',name:'Australia',flag_emoji:'🇦🇺',region_code:'OCEANIA'},{code:'NZ',name:'New Zealand',flag_emoji:'🇳🇿',region_code:'OCEANIA'},
+    {code:'SG',name:'Singapore',flag_emoji:'🇸🇬',region_code:'APAC_SE'},{code:'US',name:'United States',flag_emoji:'🇺🇸',region_code:'NA'},
+    {code:'CA',name:'Canada',flag_emoji:'🇨🇦',region_code:'NA'},{code:'IN',name:'India',flag_emoji:'🇮🇳',region_code:'INDIA'},
+    {code:'SE',name:'Sweden',flag_emoji:'🇸🇪',region_code:'EU'},{code:'DE',name:'Germany',flag_emoji:'🇩🇪',region_code:'EU'},
+  ],
+  schools:[
+    {id:'s-au',name:'City Beach Primary School',city:'Perth',country_code:'AU',data_region:'OCEANIA',is_pilot:true},
+    {id:'s-sg',name:'Tampines Green Primary',city:'Singapore',country_code:'SG',data_region:'APAC_SE',is_pilot:false},
+    {id:'s-nz',name:'Wellington Harbour School',city:'Wellington',country_code:'NZ',data_region:'OCEANIA',is_pilot:false},
+  ],
+  heroes:[
+    {id:'h1',handle:'Rory',emoji:'🌊',avatar_bg:'linear-gradient(135deg,#64B5F6,#17B5B5)',eco_title:'Reef Ranger',class_name:'5B',school_id:'s-au',level:12,xp:3680,xp_to_next:4500,riplets:1240,streak_days:14},
+    {id:'h2',handle:'Kelly',emoji:'🌸',avatar_bg:'linear-gradient(135deg,#B388FF,#FF7F7F)',eco_title:'Garden Guardian',class_name:'2A',school_id:'s-au',level:7,xp:1860,xp_to_next:2200,riplets:620,streak_days:6},
+    {id:'h3',handle:'Tane',emoji:'🌿',avatar_bg:'linear-gradient(135deg,#4CAF50,#2DD4BF)',eco_title:'Compost Captain',class_name:'5B',school_id:'s-au',level:11,xp:3210,xp_to_next:3800,riplets:990,streak_days:9},
+    {id:'h4',handle:'Mira',emoji:'💧',avatar_bg:'linear-gradient(135deg,#40E0D0,#0B8A8A)',eco_title:'Water Watcher',class_name:'4C',school_id:'s-au',level:10,xp:2890,xp_to_next:3500,riplets:870,streak_days:5},
+    {id:'h5',handle:'Eli',emoji:'⚡',avatar_bg:'linear-gradient(135deg,#FFD93D,#FF9800)',eco_title:'Energy Saver',class_name:'5B',school_id:'s-au',level:9,xp:2540,xp_to_next:3000,riplets:710,streak_days:7},
+  ],
+  activities:[
+    {code:'cup',emoji:'☕',name:'Skip single-use cup',riplets:15,xp:10,waste_kg:0.02,co2_kg:0.05,water_l:20},
+    {code:'bag',emoji:'🛍️',name:'Bring reusable bag',riplets:25,xp:15,waste_kg:0.01,co2_kg:0.03,water_l:5},
+    {code:'compost',emoji:'🥬',name:'Compost food scraps',riplets:30,xp:20,waste_kg:0.30,co2_kg:0.20,water_l:0},
+    {code:'repair',emoji:'🔧',name:'Repair instead of replace',riplets:50,xp:35,waste_kg:0.50,co2_kg:1.20,water_l:40},
+    {code:'bulk',emoji:'🧴',name:'Buy bulk / refill',riplets:40,xp:25,waste_kg:0.15,co2_kg:0.30,water_l:10},
+    {code:'share',emoji:'🤝',name:'Share / donate item',riplets:35,xp:22,waste_kg:0.40,co2_kg:0.80,water_l:15},
+  ],
+  bins:[
+    {id:'b1',code:'BIN-A1',name:'Canteen Recycling',location:'Canteen',stream:'recycling',fill_pct:78},
+    {id:'b2',code:'BIN-A2',name:'Canteen Landfill',location:'Canteen',stream:'landfill',fill_pct:54},
+    {id:'b3',code:'BIN-B1',name:'Library Paper',location:'Library',stream:'paper',fill_pct:32},
+    {id:'b4',code:'BIN-C1',name:'Playground Compost',location:'Playground',stream:'compost',fill_pct:64},
+    {id:'b5',code:'BIN-C2',name:'Oval Recycling',location:'Oval',stream:'recycling',fill_pct:41},
+  ],
+  badges:[
+    {code:'sort_star',name:'Sorting Superstar',icon:'⚔️',points:150,threshold_label:'50 items sorted',progress:84,earned:false},
+    {code:'carbon_warrior',name:'Carbon Warrior',icon:'🌿',points:200,threshold_label:'25 kg CO₂ saved',progress:72,earned:false},
+    {code:'forest_guardian',name:'Forest Guardian',icon:'🌲',points:250,threshold_label:'5 trees equivalent',progress:60,earned:false},
+    {code:'waste_wizard',name:'Waste Wizard',icon:'🧙',points:180,threshold_label:'40 kg rescued',progress:48,earned:false},
+    {code:'streak_master',name:'Streak Master',icon:'🔥',points:120,threshold_label:'14 day streak',progress:100,earned:true},
+  ],
+  challenge:{season:'Season 3',name:'Global EcoChallenge 2026',goal_label:'Plant 10,000 Trees',goal_value:10000,current_value:7340,days_left:42},
+  country_scores:[
+    {country_code:'SE',eco_points:185840,schools_n:21,students_n:3680},{country_code:'AU',eco_points:184600,schools_n:18,students_n:3200},
+    {country_code:'SG',eco_points:171200,schools_n:16,students_n:2950},{country_code:'NZ',eco_points:142300,schools_n:12,students_n:2010},
+    {country_code:'CA',eco_points:138900,schools_n:14,students_n:2240},{country_code:'US',eco_points:129400,schools_n:15,students_n:2480},
+    {country_code:'IN',eco_points:118700,schools_n:22,students_n:4100},{country_code:'DE',eco_points:110500,schools_n:18,students_n:2900},
+  ],
+  curriculum:[
+    {week_no:1,title:'Waste Detectives',theme:'Explore — where does our waste go?',strands:['Science','HASS'],status:'done'},
+    {week_no:2,title:'The Plastic Problem',theme:'Explore — oceans & rivers',strands:['Science','English'],status:'done'},
+    {week_no:3,title:'Sorting Science',theme:'Engage — materials & streams',strands:['Science','Mathematics'],status:'done'},
+    {week_no:4,title:'Reuse & Repair',theme:'Engage — creative reuse & upcycling',strands:['Technologies','Arts'],status:'active'},
+    {week_no:5,title:'Measuring Our Impact',theme:'Empower — data from our bins',strands:['Mathematics','Science'],status:'upcoming'},
+    {week_no:6,title:'Designing Solutions',theme:'Empower — design thinking',strands:['Technologies','Arts'],status:'upcoming'},
+    {week_no:7,title:'Our Campus Campaign',theme:'Execute — whole-school action',strands:['HASS','English'],status:'upcoming'},
+    {week_no:8,title:'Sharing With the World',theme:'Execute — global exchange',strands:['HASS','English'],status:'upcoming'},
+  ],
+  devices:[
+    {id:'d1',thinklid_serial:'TL-AU-0001',bin_id:'b1',school_id:'s-au',is_active:true,last_seen_at:new Date(Date.now()-2*60000).toISOString()},
+    {id:'d2',thinklid_serial:'TL-AU-0004',bin_id:'b4',school_id:'s-au',is_active:true,last_seen_at:new Date(Date.now()-37*60000).toISOString()},
+    {id:'d3',thinklid_serial:'TL-AU-0005',bin_id:'b5',school_id:'s-au',is_active:false,last_seen_at:new Date(Date.now()-5*864e5).toISOString()},
+  ],
+  profiles:[
+    {id:'u1',email:'len@matter.city',role:'super_admin',school_id:null},
+    {id:'u2',email:'teacher@citybeachps.wa.edu.au',role:'school_admin',school_id:'s-au'},
+    {id:'u3',email:'mrlee@tampinesgreen.edu.sg',role:'teacher',school_id:'s-sg'},
+    {id:'u4',email:'newstaff@example.edu',role:'teacher',school_id:null},
+  ],
+  rewards:[
+    {code:'bottle',kind:'real',emoji:'🧴',name:'Bamboo Water Bottle',descr:'Eco-friendly hydration',cost:500},
+    {code:'voucher',kind:'real',emoji:'🏷️',name:'Eco Store Voucher',descr:'$10 store credit',cost:750},
+    {code:'tree',kind:'real',emoji:'🌳',name:'Tree Planting Credit',descr:'Plant a real tree!',cost:300},
+    {code:'wraps',kind:'real',emoji:'🍱',name:'Reusable Food Wraps',descr:'Beeswax wrap set',cost:400},
+    {code:'course',kind:'real',emoji:'📚',name:'Sustainability Course',descr:'Online learning access',cost:600},
+    {code:'avatar',kind:'virtual',emoji:'🎨',name:'Avatar: Ocean Explorer',descr:'Exclusive character skin',cost:150},
+    {code:'frame',kind:'virtual',emoji:'✨',name:'Animated Badge Frame',descr:'Sparkle effect for badges',cost:200},
+    {code:'garden',kind:'virtual',emoji:'🏡',name:'Garden Expansion',descr:'Unlock tropical zone',cost:350},
+    {code:'sounds',kind:'virtual',emoji:'🎵',name:'Nature Sounds Pack',descr:'Rainforest & ocean sounds',cost:100},
+  ],
+  clubs:[
+    {code:'zero',emoji:'🏆',name:'Zero Waste Champions',price:50,perk:'2x Riplets on weekends',bg:'linear-gradient(135deg,#E0FAF5,#B2F5EA)',border:'#40E0D0'},
+    {code:'plastic',emoji:'🚫',name:'Plastic-Free Pioneers',price:75,perk:'Exclusive challenges + 15% store discount',bg:'linear-gradient(135deg,#DCEEFB,#EDE0FF)',border:'#64B5F6'},
+    {code:'upcycle',emoji:'♻️',name:'Upcycling Masters',price:40,perk:'DIY tutorials + community marketplace',bg:'linear-gradient(135deg,#D5F0D5,#FFF4C8)',border:'#4CAF50'},
+  ],
+  exchange:[
+    {id:'m1',partner_country:'SG',author:'Class 5B',body:'Kia ora from Perth! We diverted 48kg this week — how is Tampines Green going? 🌊',created_at:new Date(Date.now()-3*36e5).toISOString()},
+    {id:'m2',partner_country:'NZ',author:'Eco Club',body:'Loved your harbour clean-up photos. We are trying the same at City Beach! 🐚',created_at:new Date(Date.now()-26*36e5).toISOString()},
+    {id:'m3',partner_country:'SE',author:'Class 4C',body:'Your compost system is amazing. Sharing our worm-farm tips back 🪱',created_at:new Date(Date.now()-50*36e5).toISOString()},
+  ],
+  quests:[
+    {code:'sg_hawker',country_code:'SG',emoji:'🥡',title:'Hawker Zero-Waste',descr:'How Singapore hawker centres cut single-use plastic.'},
+    {code:'nz_kaitiaki',country_code:'NZ',emoji:'🌿',title:'Kaitiakitanga',descr:'The Māori principle of guardianship of nature.'},
+    {code:'se_pant',country_code:'SE',emoji:'♻️',title:'Pant Deposit Return',descr:'Sweden recycles ~85% of bottles via deposit return.'},
+    {code:'in_ragpicker',country_code:'IN',emoji:'🤝',title:'Waste-Picker Heroes',descr:"Recognise India's informal recyclers and their impact."},
+  ],
+  gameItems:[
+    {emoji:'🍎',name:'Apple core',bin:'compost'},{emoji:'🍌',name:'Banana peel',bin:'compost'},{emoji:'🥬',name:'Lettuce',bin:'compost'},
+    {emoji:'🥤',name:'Plastic cup',bin:'landfill'},{emoji:'🍕',name:'Greasy pizza box',bin:'landfill'},{emoji:'🩹',name:'Used bandage',bin:'landfill'},
+    {emoji:'🧴',name:'Shampoo bottle',bin:'recycling'},{emoji:'🥫',name:'Tin can',bin:'recycling'},{emoji:'🍾',name:'Glass bottle',bin:'recycling'},
+    {emoji:'📰',name:'Newspaper',bin:'paper'},{emoji:'📦',name:'Cardboard box',bin:'paper'},{emoji:'✉️',name:'Envelope',bin:'paper'},
+    {emoji:'🍂',name:'Dead leaves',bin:'compost'},{emoji:'🥚',name:'Eggshells',bin:'compost'},{emoji:'🧃',name:'Juice carton',bin:'recycling'},{emoji:'📄',name:'Office paper',bin:'paper'},
+  ],
+};
+// derive mock impact + bin history
+MOCK.binHistory = {};
+MOCK.bins.forEach(b=>{MOCK.binHistory[b.id]=Array.from({length:24},(_,h)=>Math.max(0,Math.min(100,Math.round(20+70*(h/23)+(Math.random()*12-6)))));});
+
+const streamColor = {landfill:'#8D6E63',recycling:'#17B5B5',compost:'#4CAF50',paper:'#64B5F6'};
+
+/* ════════ DATA LAYER — same calls, mock or live ════════ */
+const DB = {
+  async schools(){ if(!LIVE) return MOCK.schools;
+    const {data}=await sb.from('schools').select('id,name,city,country_code,data_region,is_pilot').order('is_pilot',{ascending:false}); return data||[]; },
+  async regions(){ if(!LIVE) return MOCK.regions;
+    const {data}=await sb.from('regions').select('*'); return data||[]; },
+  async heroes(schoolId){ if(!LIVE) return MOCK.heroes.filter(h=>h.school_id===schoolId);
+    const {data}=await sb.from('school_leaderboard').select('eco_hero_id,handle,emoji,eco_title,school_id,class_name,xp,riplets,level').eq('school_id',schoolId).order('xp',{ascending:false});
+    return (data||[]).map(h=>({id:h.eco_hero_id,handle:h.handle,emoji:h.emoji,eco_title:h.eco_title,school_id:h.school_id,class_name:h.class_name,xp:h.xp,riplets:h.riplets,level:h.level})); },
+  async heroFull(id){ if(!LIVE) return MOCK.heroes.find(h=>h.id===id);
+    const {data}=await sb.from('eco_heroes').select('*').eq('id',id).single();
+    return data?{...data,class_name:''}:null; },
+  async activities(){ if(!LIVE) return MOCK.activities;
+    const {data}=await sb.from('activities').select('*'); return data||[]; },
+  async heroImpact(id){ if(!LIVE){
+      const a=MOCK.activities; const base=MOCK.heroes.find(h=>h.id===id);
+      const mult=(base?base.level:8); // illustrative scaling for demo
+      return {waste_kg:(48*mult/12).toFixed(1),co2_kg:(32*mult/12).toFixed(1),water_l:Math.round(840*mult/12),trees_saved:Math.round(12*mult/12)};
+    }
+    const {data}=await sb.from('hero_impact').select('*').eq('eco_hero_id',id).single();
+    return data||{waste_kg:0,co2_kg:0,water_l:0,trees_saved:0}; },
+  async recent(id){ if(!LIVE){ return MOCK.activities.slice(0,4).map((a,i)=>({...a,mins:i*7+3})); }
+    const {data}=await sb.from('activity_logs').select('activity_code,logged_at,riplets_awarded,activities(emoji,name)').eq('eco_hero_id',id).order('logged_at',{ascending:false}).limit(6);
+    return (data||[]).map(r=>({emoji:r.activities?.emoji||'🌿',name:r.activities?.name||r.activity_code,riplets:r.riplets_awarded,mins:Math.round((Date.now()-new Date(r.logged_at))/60000)})); },
+  async badges(id){ if(!LIVE) return MOCK.badges;
+    const {data}=await sb.from('badges').select('code,name,icon,points,threshold_label,hero_badges(progress,earned_at,eco_hero_id)');
+    return (data||[]).map(b=>{const hb=(b.hero_badges||[]).find(x=>x.eco_hero_id===id);return {...b,progress:hb?hb.progress:0,earned:!!(hb&&hb.earned_at)};}); },
+  async bins(schoolId){ if(!LIVE) return MOCK.bins;
+    const {data}=await sb.from('bin_status').select('*').eq('school_id',schoolId).order('code'); return data||[]; },
+  async binHistory(schoolId){ if(!LIVE) return MOCK.binHistory;
+    const since=new Date(Date.now()-24*3600*1000).toISOString();
+    const {data:bins}=await sb.from('bins').select('id').eq('school_id',schoolId);
+    const ids=(bins||[]).map(b=>b.id); const out={};
+    const {data}=await sb.from('bin_readings').select('bin_id,fill_pct,recorded_at').in('bin_id',ids).gte('recorded_at',since).order('recorded_at');
+    (data||[]).forEach(r=>{(out[r.bin_id]=out[r.bin_id]||[]).push(r.fill_pct);}); return out; },
+  async countryScores(){ if(!LIVE) return MOCK.country_scores;
+    const {data}=await sb.from('country_scores').select('country_code,eco_points,schools_n,students_n').order('eco_points',{ascending:false}); return data||[]; },
+  async challenge(){ if(!LIVE) return MOCK.challenge;
+    const {data}=await sb.from('global_challenges').select('*').eq('status','active').limit(1).single();
+    if(!data) return MOCK.challenge;
+    return {...data,days_left:data.ends_at?Math.max(0,Math.round((new Date(data.ends_at)-Date.now())/864e5)):0}; },
+  async curriculum(){ if(!LIVE) return MOCK.curriculum;
+    const {data}=await sb.from('curriculum_weeks').select('*').order('week_no'); return data||[]; },
+  async logActivity(heroId,act){
+    if(!LIVE) return {ok:true};
+    await sb.from('activity_logs').insert({eco_hero_id:heroId,activity_code:act.code,riplets_awarded:act.riplets,xp_awarded:act.xp});
+    const h=state.hero;
+    await sb.from('eco_heroes').update({riplets:h.riplets,xp:h.xp}).eq('id',heroId);
+    return {ok:true};
+  },
+  /* ── Admin ── */
+  async devices(schoolId){ if(!LIVE) return MOCK.devices.filter(d=>d.school_id===schoolId);
+    const {data}=await sb.from('devices').select('id,thinklid_serial,bin_id,school_id,is_active,last_seen_at').eq('school_id',schoolId).order('thinklid_serial'); return data||[]; },
+  async registerLid(serial,binId,schoolId){
+    if(!LIVE){ const k=Array.from({length:48},()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
+      let d=MOCK.devices.find(x=>x.thinklid_serial===serial);
+      if(d){d.bin_id=binId;d.school_id=schoolId;d.is_active=true;}else{MOCK.devices.push({id:'d'+Date.now(),thinklid_serial:serial,bin_id:binId,school_id:schoolId,is_active:true,last_seen_at:null});}
+      return {key:k}; }
+    const {data,error}=await sb.rpc('register_thinklid',{p_serial:serial,p_bin:binId,p_school:schoolId});
+    if(error)throw error; return {key:data}; },
+  async setDeviceActive(id,active){ if(!LIVE){const d=MOCK.devices.find(x=>x.id===id);if(d)d.is_active=active;return;}
+    await sb.from('devices').update({is_active:active}).eq('id',id); },
+  async profiles(){ if(!LIVE) return MOCK.profiles;
+    const {data}=await sb.from('profiles').select('id,email,role,school_id').order('email'); return data||[]; },
+  async updateProfile(id,patch){ if(!LIVE){const p=MOCK.profiles.find(x=>x.id===id);if(p)Object.assign(p,patch);return;}
+    await sb.from('profiles').update(patch).eq('id',id); },
+  /* ── Rewards / Clubs / Exchange / Game ── */
+  async rewards(){ if(!LIVE) return MOCK.rewards;
+    const {data}=await sb.from('rewards').select('*').order('cost'); return data||[]; },
+  async redemptions(heroId){ if(!LIVE) return state.redeemed?Object.keys(state.redeemed):[];
+    const {data}=await sb.from('reward_redemptions').select('reward_code').eq('eco_hero_id',heroId);
+    return (data||[]).map(r=>r.reward_code); },
+  async redeem(heroId,reward){
+    state.hero.riplets-=reward.cost; updateStats();
+    if(LIVE){ await sb.from('reward_redemptions').insert({eco_hero_id:heroId,reward_code:reward.code});
+      await sb.from('eco_heroes').update({riplets:state.hero.riplets}).eq('id',heroId); }
+    return {ok:true}; },
+  async clubs(){ if(!LIVE) return MOCK.clubs;
+    const {data}=await sb.from('clubs').select('*'); return data||[]; },
+  async heroClubs(heroId){ if(!LIVE) return state.joined?Object.keys(state.joined):[];
+    const {data}=await sb.from('hero_clubs').select('club_code').eq('eco_hero_id',heroId);
+    return (data||[]).map(r=>r.club_code); },
+  async joinClub(heroId,club){
+    state.hero.riplets-=club.price; updateStats();
+    if(LIVE){ await sb.from('hero_clubs').insert({eco_hero_id:heroId,club_code:club.code});
+      await sb.from('eco_heroes').update({riplets:state.hero.riplets}).eq('id',heroId); }
+    return {ok:true}; },
+  async exchange(schoolId){ if(!LIVE) return MOCK.exchange;
+    const {data}=await sb.from('exchange_messages').select('*').eq('school_id',schoolId).order('created_at',{ascending:false}); return data||[]; },
+  async postExchange(schoolId,author,body){ if(!LIVE){MOCK.exchange.unshift({id:'m'+Date.now(),partner_country:null,author,body,created_at:new Date().toISOString()});return;}
+    await sb.from('exchange_messages').insert({school_id:schoolId,author,body}); },
+  async quests(){ if(!LIVE) return MOCK.quests;
+    const {data}=await sb.from('cultural_quests').select('*'); return data||[]; },
+  async awardGame(heroId,riplets,xp){
+    state.hero.riplets+=riplets; state.hero.xp+=xp; updateStats();
+    if(LIVE){ await sb.from('activity_logs').insert({eco_hero_id:heroId,activity_code:'game',riplets_awarded:riplets,xp_awarded:xp});
+      await sb.from('eco_heroes').update({riplets:state.hero.riplets,xp:state.hero.xp}).eq('id',heroId); }
+    return {ok:true}; },
+};
+
+/* ════════ STATE ════════ */
+const state={ regions:[],countries:{},schools:[],school:null,heroes:[],hero:null,loggedToday:{},profile:null,isAdmin:false,isSuper:false,redeemed:{},joined:{} };
+
+function fmt(n){return Number(n).toLocaleString();}
+function byCode(arr,code,key='code'){return arr.find(x=>x[key]===code);}
+
+/* ════════ AUTH (live mode only) ════════ */
+function showLogin(msg){
+  document.getElementById('auth-overlay').classList.add('show');
+  if(msg)document.getElementById('auth-err').textContent=msg;
+}
+function hideLogin(){document.getElementById('auth-overlay').classList.remove('show');}
+async function doLogin(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  const errEl=document.getElementById('auth-err');errEl.textContent='';
+  if(!email||!pass){errEl.textContent='Enter email and password.';return;}
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){errEl.textContent=error.message;return;}
+  hideLogin();
+  await init();
+}
+async function doLogout(){ await sb.auth.signOut(); location.reload(); }
+async function loadProfile(){
+  const {data}=await sb.from('profiles').select('email,role,school_id').eq('id',(await sb.auth.getUser()).data.user.id).maybeSingle();
+  return data;
+}
+function showSignedIn(){
+  if(document.getElementById('signout-wrap'))return;
+  const wrap=document.createElement('div');wrap.id='signout-wrap';wrap.style.cssText='display:flex;align-items:center;gap:8px';
+  const who=document.createElement('span');who.style.cssText='font-size:11px;font-weight:700;color:var(--aqua-deep)';
+  who.textContent=(state.profile?.role==='super_admin'?'⭐ ':'👩‍🏫 ')+(state.profile?.email||'signed in');
+  const btn=document.createElement('button');btn.className='signout-btn';btn.textContent='Sign out';btn.onclick=doLogout;
+  wrap.appendChild(who);wrap.appendChild(btn);
+  document.querySelector('.topbar-right').appendChild(wrap);
+}
+
+/* ════════ INIT ════════ */
+async function init(){
+  document.getElementById('conn-banner').className='banner '+(LIVE?'banner-live':'banner-mock');
+  document.getElementById('conn-banner').innerHTML = LIVE
+    ? '🟢 Connected to your Supabase project — showing live data.'
+    : '⚙️ Running on local demo data — add your Supabase URL + anon key in the CONFIG block of this file to go live.';
+
+  if(LIVE){
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ showLogin(); return; }
+    state.profile=await loadProfile();
+    showSignedIn();
+    const r=state.profile?.role;
+    state.isSuper=r==='super_admin'; state.isAdmin=r==='super_admin'||r==='school_admin';
+  } else {
+    state.isSuper=true; state.isAdmin=true;            // demo: show admin tools as a preview
+    document.getElementById('admin-demo-note').style.display='';
+  }
+  if(state.isAdmin) document.getElementById('admin-nav').style.display='';
+  if(state.isSuper) document.getElementById('adm-users-card').style.display='';
+
+  state.regions=await DB.regions();
+  state.schools=await DB.schools();   // RLS scopes this to the signed-in user's school(s)
+  (await fetchCountries()).forEach(c=>state.countries[c.code]=c);
+
+  if(LIVE && state.schools.length===0){
+    document.getElementById('conn-banner').className='banner banner-mock';
+    document.getElementById('conn-banner').innerHTML='🟡 Signed in, but your account isn’t linked to a school yet. A SmartLoop admin needs to set your <code>school_id</code> in <code>profiles</code>.';
+    return;
+  }
+
+  buildSchoolSelect();
+  state.school=state.schools[0];
+  await loadSchool();
+  wireNav();
+}
+async function fetchCountries(){ if(!LIVE) return MOCK.countries;
+  const {data}=await sb.from('countries').select('*'); return data||MOCK.countries; }
+
+function buildSchoolSelect(){
+  const sel=document.getElementById('school-select');
+  sel.innerHTML=state.schools.map(s=>{
+    const reg=byCode(state.regions,s.data_region)||{supabase_region:'—'};
+    const c=state.countries[s.country_code]||{flag_emoji:'🏫'};
+    return `<option value="${s.id}">${c.flag_emoji} ${s.name} · ${reg.supabase_region}</option>`;
+  }).join('');
+  sel.onchange=async()=>{state.school=state.schools.find(s=>s.id===sel.value);await loadSchool();};
+}
+
+async function loadSchool(){
+  state.heroes=await DB.heroes(state.school.id);
+  state.hero=state.heroes[0];
+  renderProfiles();
+  await Promise.all([renderDashboard(),renderActivities(),renderBadges(),renderBins(),renderLeaderboard(),renderGlobal(),renderCurriculum(),renderRewards(),renderClubs(),renderExchange()]);
+  if(state.isAdmin) await renderAdmin();
+  subscribeRealtime();
+}
+
+/* ════════ HERO / PROFILES ════════ */
+function renderProfiles(){
+  const list=document.getElementById('profile-list');
+  list.innerHTML=state.heroes.map(h=>`
+    <div class="profile-option ${h.id===state.hero.id?'active-profile':''}" data-hero="${h.id}">
+      <div class="profile-avatar" style="background:${h.avatar_bg||'var(--turq)'}">${h.emoji||'🌊'}</div>
+      <div><div class="profile-name">${h.handle}</div><div class="profile-detail">Lvl ${h.level} · ${h.eco_title||''}</div></div>
+    </div>`).join('');
+  list.querySelectorAll('[data-hero]').forEach(el=>el.onclick=async()=>{
+    state.hero=state.heroes.find(h=>h.id===el.dataset.hero);state.loggedToday={};state.redeemed={};state.joined={};
+    renderProfiles();await renderDashboard();await renderActivities();await renderBadges();await renderRewards();await renderClubs();
+    toast(state.hero.emoji,`Switched to ${state.hero.handle}!`,'club');confetti(innerWidth/2,160);
+  });
+  const h=state.hero;
+  document.getElementById('footer-avatar').textContent=h.emoji||'🌊';
+  document.getElementById('footer-avatar').style.background=h.avatar_bg||'var(--turq)';
+  document.getElementById('footer-name').textContent='EcoHero '+h.handle;
+  document.getElementById('footer-level').textContent=`Level ${h.level} · ${h.eco_title||''}`;
+  updateStats();
+}
+function updateStats(){
+  const h=state.hero;
+  document.getElementById('stat-riplets').innerHTML=`💧 ${fmt(h.riplets)} Riplets`;
+  document.getElementById('stat-xp').innerHTML=`⚡ ${fmt(h.xp)} XP`;
+  document.getElementById('stat-streak').innerHTML=`🔥 ${h.streak_days||h.streak||0} day streak`;
+  ['stat-riplets','stat-xp'].forEach(id=>{const el=document.getElementById(id);el.classList.remove('pulse');void el.offsetWidth;el.classList.add('pulse');});
+}
+
+/* ════════ DASHBOARD ════════ */
+async function renderDashboard(){
+  const h=state.hero;
+  const imp=await DB.heroImpact(h.id);
+  const tiles=[
+    {emoji:'🌳',val:imp.trees_saved,label:'Trees Saved',fun:"That's a mini forest!"},
+    {emoji:'♻️',val:imp.waste_kg+'kg',label:'Waste Rescued',fun:"Big-dog heavy!"},
+    {emoji:'💨',val:imp.co2_kg+'kg',label:'CO₂ Saved',fun:Math.round(imp.co2_kg*5)+'km of driving'},
+    {emoji:'💧',val:fmt(imp.water_l)+'L',label:'Water Saved',fun:Math.round(imp.water_l/168)+' bathtubs'},
+  ];
+  document.getElementById('impact-tiles').innerHTML=tiles.map(t=>`
+    <div class="card impact-card"><span class="impact-emoji">${t.emoji}</span>
+      <div class="impact-val">${t.val}</div><div class="impact-label">${t.label}</div><div class="impact-fun">"${t.fun}"</div></div>`).join('');
+  const xpToNext=h.xp_to_next||(h.xp+820);
+  const pct=Math.min(100,Math.round(h.xp/xpToNext*100));
+  document.getElementById('progress-sub').textContent=`Level ${h.level} → ${h.level+1}`;
+  document.getElementById('prog-level').textContent=`🦸 ${h.eco_title||'EcoHero'}`;
+  document.getElementById('prog-xp').textContent=`${fmt(h.xp)} / ${fmt(xpToNext)} XP · ${pct}%`;
+  document.getElementById('prog-bar').style.width=pct+'%';
+  document.getElementById('prog-msg').textContent=`${fmt(Math.max(0,xpToNext-h.xp))} XP to next level — keep going!`;
+  const rec=await DB.recent(h.id);
+  document.getElementById('recent-activity').innerHTML=rec.length?rec.map(r=>`
+    <div class="activity-item"><div class="activity-emoji">${r.emoji}</div>
+      <div class="activity-text">${r.name}<div style="font-size:9px;color:var(--text-light)">${r.mins}m ago</div></div>
+      <div class="activity-pts">+${r.riplets}💧</div></div>`).join(''):'<div style="font-size:12px;color:var(--text-light)">No activity yet — log your first action!</div>';
+}
+
+/* ════════ LOG ACTIVITY ════════ */
+async function renderActivities(){
+  const acts=await DB.activities();
+  const wrap=document.getElementById('activity-cards');
+  wrap.innerHTML=acts.map(a=>`
+    <div class="activity-card ${state.loggedToday[a.code]?'logged':''}" data-act="${a.code}">
+      <div style="font-size:40px;margin-bottom:8px">${a.emoji}</div>
+      <div style="font-size:14px;font-weight:800;color:var(--text)">${a.name}</div>
+      <div style="margin-top:8px;font-size:12px;font-weight:700;color:var(--aqua-deep)">+${a.riplets} 💧 · +${a.xp} ⚡</div>
+    </div>`).join('');
+  wrap.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>logActivity(byCode(acts,el.dataset.act)));
+}
+async function logActivity(a){
+  if(state.loggedToday[a.code])return;
+  state.loggedToday[a.code]=true;
+  state.hero.riplets+=a.riplets; state.hero.xp+=a.xp;
+  updateStats(); renderActivities();
+  await DB.logActivity(state.hero.id,a);
+  await renderDashboard();
+  toast('💧',`+${a.riplets} Riplets · +${a.xp} XP — ${a.name}!`,'riplet');
+  confetti(innerWidth/2,200);
+}
+
+/* ════════ BADGES ════════ */
+async function renderBadges(){
+  const badges=await DB.badges(state.hero.id);
+  document.getElementById('badge-grid').innerHTML=badges.map(b=>`
+    <div class="badge-item ${b.earned?'earned':''}">
+      <span class="badge-icon">${b.icon}</span>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-pts">${b.earned?'✓ Earned':b.threshold_label||''}</div>
+      ${b.earned?'':`<div class="mini-bar"><div style="width:${b.progress}%"></div></div><div style="font-size:9px;color:var(--text-light);margin-top:3px">${b.progress}%</div>`}
+    </div>`).join('');
+}
+
+/* ════════ LIVE BINS ════════ */
+async function renderBins(){
+  const bins=await DB.bins(state.school.id);
+  document.getElementById('bins-badge').textContent=bins.length;
+  document.getElementById('bin-grid').innerHTML=bins.map(b=>{
+    const col=streamColor[b.stream]||'#17B5B5';const f=b.fill_pct??0;
+    const lvl=f>=85?'#FF4444':f>=60?'#FF9800':col;
+    return `<div class="card bin-card">
+      <div class="bin-visual"><div class="bin-fill" style="height:${f}%;background:${lvl}"></div></div>
+      <div class="bin-info"><div class="bin-name">${b.name}</div><div class="bin-loc">${b.location||''} · ${b.stream}</div>
+        <div class="country-bar-track" style="margin-top:6px"><div class="country-bar-fill" style="width:${f}%;background:${lvl}"></div></div></div>
+      <div class="bin-pct" style="color:${lvl}">${f}%</div></div>`;
+  }).join('');
+  const hist=await DB.binHistory(state.school.id);
+  drawBinChart(bins,hist);
+}
+function drawBinChart(bins,hist){
+  const W=640,H=200,pad=28;const el=document.getElementById('bin-chart');
+  const series=bins.slice(0,4).map(b=>({name:b.name,color:streamColor[b.stream]||'#17B5B5',pts:hist[b.id]||[]}));
+  const maxLen=Math.max(1,...series.map(s=>s.pts.length));
+  const x=i=>pad+i*(W-2*pad)/Math.max(1,maxLen-1);
+  const y=v=>H-pad-(v/100)*(H-2*pad);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+  for(let g=0;g<=100;g+=25){svg+=`<line class="ch-grid" x1="${pad}" y1="${y(g)}" x2="${W-pad}" y2="${y(g)}"/><text class="ch-label" x="2" y="${y(g)+3}">${g}%</text>`;}
+  series.forEach(s=>{ if(!s.pts.length)return;
+    const d=s.pts.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+    svg+=`<path class="ch-line" stroke="${s.color}" d="${d}"/>`;});
+  svg+=`</svg><div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:10px;font-weight:700">`+
+    series.map(s=>`<span style="color:${s.color}">● ${s.name}</span>`).join('')+`</div>`;
+  el.innerHTML=svg;
+}
+
+/* ════════ LEADERBOARD ════════ */
+async function renderLeaderboard(){
+  const heroes=[...state.heroes].sort((a,b)=>b.xp-a.xp);
+  document.getElementById('lb-sub').textContent=`${state.school.name} · top EcoHeroes`;
+  document.getElementById('leaderboard').innerHTML=heroes.map((h,i)=>{
+    const rc=i===0?'lb-rank-1':i===1?'lb-rank-2':i===2?'lb-rank-3':'lb-rank-n';
+    return `<div class="lb-row"><div class="lb-rank ${rc}">${i+1}</div>
+      <div class="profile-avatar" style="background:${h.avatar_bg||'var(--turq)'}">${h.emoji||'🌊'}</div>
+      <div class="lb-name">${h.handle}<div class="lb-class">${h.class_name||''} · ${h.eco_title||''}</div></div>
+      <div class="lb-score">${fmt(h.xp)} XP</div></div>`;
+  }).join('');
+}
+
+/* ════════ GLOBAL ════════ */
+async function renderGlobal(){
+  const ch=await DB.challenge();
+  const scores=await DB.countryScores();
+  const myCountry=state.school.country_code;
+  document.getElementById('global-summary').innerHTML=
+    `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div><div style="font-family:'Caveat',cursive;font-size:26px;font-weight:700;color:var(--aqua-deep)">🌍 ${ch.name}</div>
+      <div style="font-size:12px;color:var(--text-light);font-weight:600">${scores.length} countries · ${fmt(scores.reduce((s,c)=>s+c.schools_n,0))} schools · ${fmt(scores.reduce((s,c)=>s+c.students_n,0))} students</div></div>
+      <div style="display:flex;gap:8px"><span class="sticker" style="background:var(--sunny-pale);color:#B8860B">🏆 ${ch.season} Active</span>
+      <span class="sticker" style="background:var(--leaf-pale);color:#2E7D32">🌿 ${ch.days_left} days left</span></div></div>`;
+  const max=Math.max(...scores.map(s=>s.eco_points));
+  document.getElementById('country-board').innerHTML=scores.map((s,i)=>{
+    const c=state.countries[s.country_code]||{flag_emoji:'🏳️',name:s.country_code};
+    const rc=i===0?'lb-rank-1':i===1?'lb-rank-2':i===2?'lb-rank-3':'lb-rank-n';
+    return `<div class="country-row ${s.country_code===myCountry?'highlight':''}">
+      <div class="country-rank ${rc}">${i+1}</div><div class="country-flag">${c.flag_emoji}</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700">${c.name} <span style="font-size:10px;color:var(--text-light)">· ${s.schools_n} schools</span></div>
+        <div class="country-bar-track"><div class="country-bar-fill" style="width:${(s.eco_points/max*100).toFixed(0)}%;background:linear-gradient(90deg,var(--aqua),var(--turq))"></div></div></div>
+      <div class="lb-score">${fmt(s.eco_points)}</div></div>`;
+  }).join('');
+  const pct=Math.min(100,Math.round(ch.current_value/ch.goal_value*100));
+  document.getElementById('goal-sub').textContent='All countries, one mission';
+  document.getElementById('goal-box').innerHTML=
+    `<div style="text-align:center;font-size:48px">🌲</div>
+     <div style="text-align:center;font-weight:800;font-size:14px;margin-bottom:8px">${ch.goal_label}</div>
+     <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--text-light)"><span>${fmt(ch.current_value)}</span><span>${fmt(ch.goal_value)}</span></div>
+     <div class="country-bar-track" style="height:14px"><div class="country-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--leaf),var(--aqua))"></div></div>
+     <div style="text-align:center;font-size:11px;color:var(--aqua);font-weight:700;margin-top:8px">${pct}% — every Riplet counts 🌏</div>`;
+  document.getElementById('partner-grid').innerHTML=scores.map(s=>{
+    const c=state.countries[s.country_code]||{flag_emoji:'🏳️',name:s.country_code};
+    return `<div class="card" style="text-align:center;padding:14px 10px"><div style="font-size:32px">${c.flag_emoji}</div>
+      <div style="font-size:11px;font-weight:700;color:var(--aqua-deep);margin-top:4px">${c.name}</div>
+      <div style="font-size:9px;color:var(--text-light);font-weight:600">${fmt(s.students_n)} students</div></div>`;
+  }).join('');
+}
+
+/* ════════ CURRICULUM ════════ */
+async function renderCurriculum(){
+  const weeks=await DB.curriculum();
+  const done=weeks.filter(w=>w.status==='done').length;
+  document.getElementById('curr-pct').textContent=Math.round(done/weeks.length*100)+'%';
+  document.getElementById('curr-prog-text').textContent=`${done} of ${weeks.length} weeks`;
+  document.getElementById('curriculum-weeks').innerHTML=weeks.map(w=>`
+    <div class="curr-week ${w.status==='done'?'week-done':w.status==='active'?'week-active':''}">
+      <div class="curr-week-head">
+        <div class="curr-week-num ${w.status}">${w.status==='done'?'✓':w.week_no}</div>
+        <div class="curr-week-info"><div class="curr-week-title">Week ${w.week_no}: ${w.title}</div>
+          <div class="curr-week-theme">${w.theme}</div>
+          <div class="curr-week-strands">${(w.strands||[]).map(s=>`<span class="curr-strand">${s}</span>`).join('')}</div></div>
+        <div style="font-size:10px;font-weight:700;color:${w.status==='active'?'#B8860B':w.status==='done'?'#2E7D32':'var(--text-light)'}">${w.status.toUpperCase()}</div>
+      </div></div>`).join('');
+}
+
+/* ════════ REWARDS ════════ */
+async function renderRewards(){
+  const rewards=await DB.rewards();
+  const redeemed=await DB.redemptions(state.hero.id);
+  state.redeemed={};redeemed.forEach(c=>state.redeemed[c]=true);
+  document.getElementById('rewards-balance').textContent='💧 '+fmt(state.hero.riplets);
+  const render=(list,elId)=>{
+    const box=document.getElementById(elId);
+    box.innerHTML=list.map(r=>{
+      const done=state.redeemed[r.code], cant=!done&&state.hero.riplets<r.cost;
+      return `<div class="reward-item"><div class="reward-emoji">${r.emoji}</div>
+        <div style="flex:1"><div class="reward-name">${r.name}</div><div class="reward-desc">${r.descr||''}</div></div>
+        <div class="reward-cost">💧${r.cost}</div>
+        <button class="reward-btn ${done?'redeemed':cant?'cant':''}" data-reward="${r.code}">${done?'✓ Redeemed':cant?'Need more':'Redeem'}</button></div>`;
+    }).join('');
+    box.querySelectorAll('[data-reward]').forEach(b=>b.onclick=()=>redeemReward(byCode(rewards,b.dataset.reward)));
+  };
+  render(rewards.filter(r=>r.kind==='real'),'rewards-real');
+  render(rewards.filter(r=>r.kind==='virtual'),'rewards-virtual');
+}
+async function redeemReward(r){
+  if(state.redeemed[r.code])return;
+  if(state.hero.riplets<r.cost){toast('⚠️','Not enough Riplets yet','error');return;}
+  state.redeemed[r.code]=true;
+  await DB.redeem(state.hero.id,r);
+  await renderRewards();
+  toast(r.emoji,`Redeemed ${r.name}!`,'club');confetti(innerWidth/2,200);
+}
+
+/* ════════ CLUBS ════════ */
+async function renderClubs(){
+  const clubs=await DB.clubs();
+  const joined=await DB.heroClubs(state.hero.id);
+  state.joined={};joined.forEach(c=>state.joined[c]=true);
+  const grid=document.getElementById('clubs-grid');
+  grid.innerHTML=clubs.map(c=>{
+    const j=state.joined[c.code];
+    return `<div class="card club-card" style="background:${c.bg};border-color:${c.border}">
+      <span class="club-emoji">${c.emoji}</span>
+      <div class="club-name" style="color:${c.border}">${c.name}</div>
+      <div class="club-price">💧 ${c.price} to join</div>
+      <div class="club-perk">${c.perk}</div>
+      <button class="club-join ${j?'joined':''}" style="border-color:${c.border};color:${c.border}" data-club="${c.code}">${j?'✓ Joined':'Join Club'}</button></div>`;
+  }).join('');
+  grid.querySelectorAll('[data-club]').forEach(b=>b.onclick=()=>joinClub(byCode(clubs,b.dataset.club)));
+}
+async function joinClub(c){
+  if(state.joined[c.code])return;
+  if(state.hero.riplets<c.price){toast('⚠️','Not enough Riplets to join','error');return;}
+  state.joined[c.code]=true;
+  await DB.joinClub(state.hero.id,c);
+  await renderClubs();
+  toast(c.emoji,`Joined ${c.name}!`,'club');confetti(innerWidth/2,200);
+}
+
+/* ════════ EXCHANGE ════════ */
+async function renderExchange(){
+  const scores=await DB.countryScores();
+  document.getElementById('exchange-partners').innerHTML=scores.map(s=>{
+    const c=state.countries[s.country_code]||{flag_emoji:'🏳️',name:s.country_code};
+    return `<div class="partner-card"><div style="font-size:32px">${c.flag_emoji}</div>
+      <div style="font-size:11px;font-weight:700;color:var(--aqua-deep);margin-top:4px">${c.name}</div>
+      <div style="font-size:9px;color:var(--text-light);font-weight:600">${fmt(s.students_n)} students</div></div>`;
+  }).join('');
+  const msgs=await DB.exchange(state.school.id);
+  document.getElementById('exchange-wall').innerHTML=msgs.length?msgs.map(m=>{
+    const c=m.partner_country?state.countries[m.partner_country]:null;
+    return `<div class="exchange-msg"><div class="activity-emoji">${c?c.flag_emoji:'🏫'}</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700">${m.author}</div>
+        <div style="font-size:12px;color:var(--text)">${m.body}</div>
+        <div style="font-size:9px;color:var(--text-light)">${timeAgo(m.created_at)}</div></div></div>`;
+  }).join(''):'<div style="font-size:12px;color:var(--text-light)">No messages yet.</div>';
+  const quests=await DB.quests();
+  document.getElementById('exchange-quests').innerHTML=quests.map(q=>{
+    const c=q.country_code?state.countries[q.country_code]:null;
+    return `<div class="quest-item" data-quest="${q.code}"><div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:20px">${q.emoji}</span><div><div style="font-size:12px;font-weight:700">${q.title} ${c?c.flag_emoji:''}</div>
+      <div style="font-size:10px;color:var(--text-light)">${q.descr||''}</div></div></div></div>`;
+  }).join('');
+  document.getElementById('exchange-quests').querySelectorAll('[data-quest]').forEach(el=>el.onclick=()=>el.classList.toggle('quest-done'));
+}
+
+/* ════════ RECYCLING GAME ("Sort It Out!") ════════ */
+const GAME={diff:'easy',times:{easy:6,medium:4,hard:2.5},bins:[
+  {stream:'landfill',emoji:'🗑️',label:'Landfill',color:'#8D6E63'},
+  {stream:'recycling',emoji:'♻️',label:'Recycling',color:'#17B5B5'},
+  {stream:'compost',emoji:'🥬',label:'Compost',color:'#4CAF50'},
+  {stream:'paper',emoji:'📄',label:'Paper',color:'#64B5F6'},
+]};
+let gstate=null,gtimer=null;
+function renderGameBins(){
+  const el=document.getElementById('g-bins');
+  el.innerHTML=GAME.bins.map(b=>`<div class="game-bin" data-bin="${b.stream}" style="border-color:${b.color}"><div class="game-bin-emoji">${b.emoji}</div><div class="game-bin-label" style="color:${b.color}">${b.label}</div></div>`).join('');
+  el.querySelectorAll('[data-bin]').forEach(d=>d.onclick=()=>chooseBin(d.dataset.bin,d));
+}
+function startGame(){
+  gstate={riplets:0,correct:0,total:0,lives:3,streak:0,best:0,mult:1,item:null};
+  document.getElementById('game-intro').style.display='none';
+  document.getElementById('game-over').style.display='none';
+  document.getElementById('game-play').style.display='';
+  renderGameBins();updateGameHud();nextItem();
+}
+function nextItem(){
+  if(gstate.lives<=0)return endGame();
+  const items=MOCK.gameItems;
+  gstate.item=items[Math.floor(Math.random()*items.length)];
+  const itEl=document.getElementById('g-item');itEl.textContent=gstate.item.emoji;
+  itEl.classList.remove('game-item-enter');void itEl.offsetWidth;itEl.classList.add('game-item-enter');
+  document.getElementById('g-itemname').textContent=gstate.item.name;
+  const dur=GAME.times[GAME.diff]*1000,start=Date.now();
+  const bar=document.getElementById('g-timer');bar.classList.remove('danger');bar.style.width='100%';
+  clearInterval(gtimer);
+  gtimer=setInterval(()=>{
+    const left=dur-(Date.now()-start),pct=Math.max(0,left/dur*100);
+    bar.style.width=pct+'%';if(pct<30)bar.classList.add('danger');
+    if(left<=0){clearInterval(gtimer);miss();}
+  },80);
+}
+function chooseBin(stream,el){
+  if(!gstate||!gstate.item)return;
+  clearInterval(gtimer);gstate.total++;
+  if(stream===gstate.item.bin){
+    gstate.correct++;gstate.streak++;gstate.best=Math.max(gstate.best,gstate.streak);
+    gstate.mult=1+Math.floor(gstate.streak/3);gstate.riplets+=5*gstate.mult;
+    el.classList.add('correct');setTimeout(()=>el.classList.remove('correct'),500);
+  }else{
+    gstate.streak=0;gstate.mult=1;gstate.lives--;
+    el.classList.add('wrong');setTimeout(()=>el.classList.remove('wrong'),500);
+  }
+  gstate.item=null;updateGameHud();setTimeout(nextItem,360);
+}
+function miss(){gstate.total++;gstate.streak=0;gstate.mult=1;gstate.lives--;gstate.item=null;updateGameHud();setTimeout(nextItem,320);}
+function updateGameHud(){
+  document.getElementById('g-riplets').textContent=gstate.riplets;
+  document.getElementById('g-count').textContent=gstate.correct;
+  document.getElementById('g-mult').textContent=gstate.mult;
+  document.getElementById('g-lives').textContent=gstate.lives;
+  const s=gstate.streak%3;
+  document.getElementById('g-streak').innerHTML='<span style="font-size:10px;font-weight:700;color:var(--text-light)">streak</span>'+
+    [0,1,2].map(i=>`<span class="game-streak-dot ${i<s?'lit':''}">${i+1}</span>`).join('');
+}
+async function endGame(){
+  clearInterval(gtimer);
+  document.getElementById('game-play').style.display='none';
+  document.getElementById('game-over').style.display='';
+  document.getElementById('go-riplets').textContent=gstate.riplets;
+  document.getElementById('go-correct').textContent=gstate.correct;
+  document.getElementById('go-streak').textContent=gstate.best;
+  document.getElementById('go-acc').textContent=(gstate.total?Math.round(gstate.correct/gstate.total*100):0)+'%';
+  if(gstate.riplets>0){
+    const xp=Math.round(gstate.riplets*0.7);
+    await DB.awardGame(state.hero.id,gstate.riplets,xp);
+    document.getElementById('go-saved').textContent=`+${gstate.riplets} Riplets and +${xp} XP added to ${state.hero.handle}'s journey!`;
+    await renderDashboard();
+  }else document.getElementById('go-saved').textContent='No Riplets this round — give it another go!';
+  confetti(innerWidth/2,200);
+}
+
+/* ════════ ADMIN ════════ */
+function timeAgo(iso){ if(!iso)return 'never'; const s=Math.floor((Date.now()-new Date(iso))/1000);
+  if(s<60)return s+'s ago'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }
+
+async function renderAdmin(){
+  if(!state.isAdmin)return;
+  const list = state.isSuper ? state.schools
+             : state.schools.filter(s=>s.id===(state.profile?.school_id||state.school.id));
+  const ssel=document.getElementById('adm-school');
+  ssel.innerHTML=list.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  ssel.value=(list.find(s=>s.id===state.school.id)?state.school.id:(list[0]&&list[0].id))||'';
+  ssel.onchange=refreshAdminSchool;
+  await refreshAdminSchool();
+  if(state.isSuper) await renderUsers();
+}
+async function refreshAdminSchool(){
+  const sid=document.getElementById('adm-school').value;
+  const bins=await DB.bins(sid);
+  const bsel=document.getElementById('adm-bin');
+  bsel.innerHTML=bins.length?bins.map(b=>`<option value="${b.id}">${b.name} (${b.code})</option>`).join(''):'<option value="">No bins yet</option>';
+  const binName=Object.fromEntries(bins.map(b=>[b.id,`${b.name} (${b.code})`]));
+  const devs=await DB.devices(sid);
+  document.getElementById('adm-dev-sub').textContent=`${devs.length} device${devs.length===1?'':'s'} registered`;
+  const el=document.getElementById('adm-devices');
+  el.innerHTML=devs.length?devs.map(d=>`
+    <div class="adm-row">
+      <div class="grow"><div style="font-size:13px;font-weight:700">📟 ${d.thinklid_serial}</div>
+        <div style="font-size:10px;color:var(--text-light)">${binName[d.bin_id]||'— not linked —'} · seen ${timeAgo(d.last_seen_at)}</div></div>
+      <span class="adm-tag ${d.is_active?'on':'off'}">${d.is_active?'active':'inactive'}</span>
+      <button class="adm-mini" data-rotate="${d.thinklid_serial}" data-bin="${d.bin_id||''}">Rotate key</button>
+      <button class="adm-mini ${d.is_active?'danger':''}" data-toggle="${d.id}" data-active="${d.is_active?'0':'1'}">${d.is_active?'Deactivate':'Reactivate'}</button>
+    </div>`).join(''):'<div style="font-size:12px;color:var(--text-light)">No lids registered yet — use the form to add one.</div>';
+  el.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{await DB.setDeviceActive(b.dataset.toggle,b.dataset.active==='1');toast('📟','Device updated','club');await refreshAdminSchool();});
+  el.querySelectorAll('[data-rotate]').forEach(b=>b.onclick=()=>{document.getElementById('adm-serial').value=b.dataset.rotate;if(b.dataset.bin)document.getElementById('adm-bin').value=b.dataset.bin;doRegister();});
+}
+async function renderUsers(){
+  const users=await DB.profiles();
+  const roles=['teacher','school_admin','super_admin'];
+  const schoolOpts=sel=>`<option value="">— no school —</option>`+state.schools.map(s=>`<option value="${s.id}"${s.id===sel?' selected':''}>${s.name}</option>`).join('');
+  const el=document.getElementById('adm-users');
+  el.innerHTML=users.map(u=>`
+    <div class="adm-row">
+      <div class="grow"><div style="font-size:12px;font-weight:700">${u.email||u.id}</div></div>
+      <select class="adm-sel" data-role="${u.id}">${roles.map(r=>`<option value="${r}"${r===u.role?' selected':''}>${r}</option>`).join('')}</select>
+      <select class="adm-sel" data-school="${u.id}">${schoolOpts(u.school_id)}</select>
+      <button class="adm-mini" data-save="${u.id}">Save</button>
+    </div>`).join('');
+  el.querySelectorAll('[data-save]').forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.save;
+    const role=el.querySelector(`[data-role="${id}"]`).value;
+    const school_id=el.querySelector(`[data-school="${id}"]`).value||null;
+    try{await DB.updateProfile(id,{role,school_id});toast('✅','User updated','club');}
+    catch(e){toast('⚠️',e.message||'Failed','error');}
+  });
+}
+async function doRegister(){
+  const sid=document.getElementById('adm-school').value;
+  const serial=document.getElementById('adm-serial').value.trim();
+  const binId=document.getElementById('adm-bin').value;
+  if(!serial){toast('⚠️','Enter a ThinkLid serial','error');return;}
+  if(!binId){toast('⚠️','Select a bin to link the lid to','error');return;}
+  try{
+    const {key}=await DB.registerLid(serial,binId,sid);
+    document.getElementById('adm-key').textContent=key;
+    document.getElementById('adm-key-box').style.display='';
+    toast('🔑',`Key issued for ${serial} — copy it now`,'riplet');
+    await refreshAdminSchool();
+  }catch(e){toast('⚠️',e.message||'Registration failed','error');}
+}
+
+/* ════════ REALTIME (live bin readings) ════════ */
+let channel=null;
+function subscribeRealtime(){
+  if(!LIVE)return;
+  if(channel)sb.removeChannel(channel);
+  channel=sb.channel('bins-'+state.school.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'bin_readings'},()=>renderBins())
+    .subscribe();
+}
+
+/* ════════ NAV ════════ */
+const titles={
+  dashboard:['My Earth-Saving Journey','Welcome back! Your planet thanks you.'],
+  activities:['Log an Eco Activity','Tap an action to earn Riplets and XP!'],
+  badges:['EcoHero Badges','Collect them all on your sustainability journey'],
+  bins:['Live Bin Status','Real-time sensor data from ThinkLid sensors'],
+  leaderboard:['School Leaderboard','See how your school is doing together'],
+  global:['Global EcoChallenge','Schools around the world competing for the planet'],
+  curriculum:["Teacher's Curriculum",'8-week program — aligned to the Australian Curriculum'],
+  rewards:['Rewards Shop','Spend your hard-earned Riplets on awesome stuff'],
+  exchange:['School Exchange','Connect, share and learn with partner schools worldwide'],
+  game:['Recycling Game','Sort waste into the right bins and earn Riplets!'],
+  clubs:['Riplet Clubs','Join a club for bonus perks and challenges'],
+  admin:['Manage','Register lids, rotate keys, and assign user roles & schools'],
+};
+function wireNav(){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const id=b.dataset.page;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    document.getElementById('page-title').textContent=titles[id][0];
+    document.getElementById('page-sub').textContent=titles[id][1];
+  });
+}
+
+/* ════════ FX ════════ */
+function toast(emoji,text,type){
+  const c=document.getElementById('toast-container');const t=document.createElement('div');
+  t.className='toast toast-'+(type||'riplet');t.innerHTML=`<span class="toast-emoji">${emoji}</span><span>${text}</span>`;
+  c.appendChild(t);setTimeout(()=>t.remove(),3200);
+}
+function confetti(x,y){
+  const cols=['#FFD93D','#40E0D0','#FF7F7F','#B388FF','#4CAF50','#64B5F6'];
+  for(let i=0;i<22;i++){const p=document.createElement('div');p.className='confetti-piece';
+    p.style.left=(x+(Math.random()-0.5)*80)+'px';p.style.top=(y+(Math.random()-0.5)*40)+'px';
+    p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    p.style.transform=`rotate(${Math.random()*360}deg)`;document.body.appendChild(p);
+    setTimeout(()=>p.remove(),2000);}
+}
+
+// Login wiring (no-op in demo mode; overlay only shows when LIVE & unauthenticated)
+document.getElementById('auth-submit').onclick=doLogin;
+document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+// Admin wiring (elements always in DOM; page hidden unless admin)
+document.getElementById('adm-register').onclick=doRegister;
+document.getElementById('adm-copy').onclick=()=>{const k=document.getElementById('adm-key').textContent;if(navigator.clipboard)navigator.clipboard.writeText(k);toast('📋','Key copied to clipboard','club');};
+
+// Game wiring
+document.querySelectorAll('.diff-btn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.diff-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');GAME.diff=b.dataset.diff;});
+document.getElementById('game-start').onclick=startGame;
+document.getElementById('game-again').onclick=()=>{document.getElementById('game-over').style.display='none';document.getElementById('game-intro').style.display='';};
+
+// Exchange post wiring
+document.getElementById('exch-send').onclick=async()=>{
+  const inp=document.getElementById('exch-input'),v=inp.value.trim();if(!v)return;
+  const author=state.profile?'Staff':('EcoHero '+(state.hero?state.hero.handle:''));
+  await DB.postExchange(state.school.id,author,v);
+  inp.value='';await renderExchange();toast('💬','Posted to the exchange wall','club');
+};
+
+init().catch(e=>{console.error(e);document.getElementById('conn-banner').className='banner banner-mock';document.getElementById('conn-banner').textContent='⚠️ '+e.message;});
+</script>
+</body>
+</html>
